@@ -208,6 +208,15 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .add .field { padding: 7px 8px; }
 .add .lbl { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-2); }
 
+.rename-btn { border: 0; background: none; padding: 0; font-size: 12px; color: var(--ink-3); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.rename-btn:hover { color: var(--ink); }
+.title-edit { display: grid; gap: 4px; min-width: 0; }
+.title-in { width: 100%; min-width: 0; font-weight: 500; font-size: 15px; border: 1px solid var(--ink); border-radius: 8px; padding: 6px 9px; background: var(--surface); }
+.title-hint { font-size: 11.5px; color: var(--ink-3); }
+.ed-title { flex: 1 1 100%; display: grid !important; gap: 4px; font-weight: 600; }
+.ed-title .title-in { font-size: 14px; border-color: var(--line); }
+.ed-title .title-in:focus { border-color: var(--ink); }
+
 /* ── Comments ───────────────────────── */
 .comments { display: grid; gap: 12px; margin-top: 6px; padding: 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
 .c-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
@@ -927,12 +936,13 @@ const EUR = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR",
 const state = {
   phase: "all", poles: new Set(), owners: new Set(), critOnly: false, hideDone: false, q: "", view: "list", me: "",
   agMode: "month", agMonth: "", agDay: "",
-  checks: {}, extras: {}, assign: {}, due: {}, comments: {}, budget: {}, docs: {}, people: {}, names: {}, email: "",
+  checks: {}, extras: {}, assign: {}, due: {}, labels: {}, comments: {}, budget: {}, docs: {}, people: {}, names: {}, email: "",
+  drafts: {}, renaming: null,
   docCat: "all", docQ: "", docTask: null, docLine: null, docPreset: null, docUsage: null,
   mode: "pending", canWrite: true, uid: null, tasks: [], plEdit: new Set(), plPast: false,
 };
 let sb = null, session = null, channel = null, startedFor = null;
-const COLL = { checks: "checks", extra: "extras", assign: "assign", due: "due", comments: "comments", budget: "budget", docs: "docs", people: "people" };
+const COLL = { checks: "checks", extra: "extras", assign: "assign", due: "due", label: "labels", comments: "comments", budget: "budget", docs: "docs", people: "people" };
 
 /* ── helpers ── */
 const $ = (s, r = document) => r.querySelector(s);
@@ -967,6 +977,7 @@ function computeTasks() {
     .sort((a, b) => String(a[1].at || "").localeCompare(String(b[1].at || "")))
     .map(([id, d]) => ({ id, phase: d.phase, pole: d.pole, crit: false, due0: isDate(d.due) ? d.due : phaseOf(d.phase).end, owner0: OWNERS[d.owner] ? d.owner : null, label: String(d.label), note: "", extra: true }));
   state.tasks = base.concat(ex);
+  state.tasks.forEach(t => { t.orig = t.label; const o = state.labels[t.id]; if (o && o.text) t.label = String(o.text); });
   return state.tasks;
 }
 const taskById = id => state.tasks.find(t => t.id === id);
@@ -1088,6 +1099,14 @@ const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slic
 const stamp = () => ({ by: state.uid, at: new Date().toISOString() });
 function setCheck(id, done) { const b = { done, who: state.me || null, ...stamp() }; state.checks[id] = b; write("checks/" + id, b); render(); }
 function setOwner(id, owner) { const b = { owner, ...stamp() }; state.assign[id] = b; write("assign/" + id, b); render(); }
+function setLabel(id, text) {
+  const t = taskById(id); if (!t) return;
+  const v = String(text == null ? "" : text).replace(/\s+/g, " ").trim().slice(0, 300);
+  delete state.drafts[id];
+  if (!v || v === t.orig) { if (state.labels[id]) { delete state.labels[id]; write("label/" + id, null); } }
+  else if (v !== t.label) { const b = { text: v, ...stamp() }; state.labels[id] = b; write("label/" + id, b); }
+  render();
+}
 function setDue(id, date) { if (!isDate(date)) return; const b = { date, ...stamp() }; state.due[id] = b; write("due/" + id, b); render(); }
 function addExtra({ phase, pole, label, owner, due }) {
   const id = newId("x");
@@ -1097,7 +1116,8 @@ function addExtra({ phase, pole, label, owner, due }) {
 function removeExtra(id) {
   delete state.extras[id]; delete state.checks[id]; delete state.assign[id]; delete state.due[id];
   write("extra/" + id, null);
-  if (state.mode === "db") ["checks", "assign", "due"].forEach(c => write(c + "/" + id, null));
+  delete state.labels[id];
+  if (state.mode === "db") ["checks", "assign", "due", "label"].forEach(c => write(c + "/" + id, null));
   render();
 }
 function addComment(phase, text) { const id = newId("c"); const b = { phase, text: text.slice(0, 2000), who: state.me || null, ...stamp() }; state.comments[id] = b; write("comments/" + id, b); render(); }
@@ -1284,9 +1304,33 @@ function buildSkeleton() {
     if (t.matches('input[type="checkbox"][data-id]')) { if (!state.canWrite) { t.checked = !t.checked; return; } setCheck(t.dataset.id, t.checked); }
     else if (t.matches("select[data-owner-for]")) { if (state.canWrite && OWNERS[t.value]) setOwner(t.dataset.ownerFor, t.value); }
     else if (t.matches("input[data-due-for]")) { if (state.canWrite && isDate(t.value)) setDue(t.dataset.dueFor, t.value); }
+    else if (t.matches(".title-in")) { if (!state.canWrite) return; if (t.dataset.ctx === "l") state.renaming = null; setLabel(t.dataset.titleFor, t.value); }
+  });
+  document.addEventListener("input", e => { const t = e.target; if (t.matches && t.matches(".title-in")) state.drafts[t.dataset.titleFor] = t.value; });
+  document.addEventListener("keydown", e => {
+    const t = e.target; if (!t.matches || !t.matches(".title-in")) return;
+    const id = t.dataset.titleFor;
+    if (e.key === "Enter") { e.preventDefault(); if (t.dataset.ctx === "l") state.renaming = null; setLabel(id, t.value); }
+    else if (e.key === "Escape") { e.preventDefault(); delete state.drafts[id]; if (t.dataset.ctx === "l") state.renaming = null; render(); }
+  });
+  document.addEventListener("focusout", e => {
+    const t = e.target; if (!t.matches || !t.matches('.title-in[data-ctx="l"]')) return;
+    const id = t.dataset.titleFor;
+    setTimeout(() => {
+      const still = document.activeElement && document.activeElement.matches && document.activeElement.matches('.title-in[data-title-for="' + id + '"]');
+      const task = taskById(id);
+      if (state.renaming === id && !still && task && (state.drafts[id] == null || state.drafts[id] === task.label)) { state.renaming = null; delete state.drafts[id]; render(); }
+    }, 150);
   });
   document.addEventListener("click", e => {
     const t = e.target;
+    const rn = t.closest("[data-rename]");
+    if (rn) {
+      const id = rn.dataset.rename, task = taskById(id); if (!task || !state.canWrite) return;
+      state.renaming = id; state.drafts[id] = task.label; render();
+      const inp = document.querySelector('.title-in[data-title-for="' + id + '"][data-ctx="l"]'); if (inp) { inp.focus(); inp.select(); }
+      return;
+    }
     const d = t.closest(".del[data-id]"); if (d) { confirmDelete(d, () => removeExtra(d.dataset.id)); return; }
     const c = t.closest(".del[data-comment]"); if (c) { confirmDelete(c, () => removeComment(c.dataset.comment)); return; }
     const g = t.closest("[data-goto-budget]"); if (g) { gotoBudget(g.dataset.gotoBudget); return; }
@@ -1445,6 +1489,15 @@ function buildBudget() {
 function focusLine(id) { requestAnimationFrame(() => { const r = rowMap.get(id); if (r) { r._f.label.focus(); r.scrollIntoView({ block: "center", behavior: reduced() ? "auto" : "smooth" }); } }); }
 
 /* ════════ task row ════════ */
+function titleEditor(t, ctx) {
+  const w = el("div", "title-edit");
+  const i = el("input", "title-in"); i.type = "text"; i.maxLength = 300;
+  i.value = state.drafts[t.id] != null ? state.drafts[t.id] : t.label;
+  i.dataset.titleFor = t.id; i.dataset.ctx = ctx; i.setAttribute("aria-label", "Titre de la mission");
+  w.appendChild(i);
+  if (ctx === "l") w.appendChild(el("span", "title-hint", "Entrée pour valider · Échap pour annuler · laisser vide pour revenir au titre d'origine"));
+  return w;
+}
 function taskRow(t, ctx, opts = {}) {
   const done = isDone(t.id), late = isLate(t), due = dueOf(t);
   const li = el("li", "task" + (done ? " done" : "") + (late ? " late" : "") + (opts.date ? " with-date" : ""));
@@ -1452,7 +1505,8 @@ function taskRow(t, ctx, opts = {}) {
   if (opts.date) { const dd = el("div", "t-date"); const o = dObj(due); dd.append(el("small", null, o.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "")), el("b", null, String(o.getDate()))); li.appendChild(dd); }
   const cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + ctx + "-" + t.id; cb.dataset.id = t.id; cb.checked = done; cb.disabled = !state.canWrite;
   const body = el("div", "t-body");
-  const lab = el("label", "t-label", t.label); lab.htmlFor = cb.id; body.appendChild(lab);
+  if (state.renaming === t.id && ctx === "l" && state.canWrite) body.appendChild(titleEditor(t, ctx));
+  else { const lab = el("label", "t-label", t.label); lab.htmlFor = cb.id; if (t.label !== t.orig) lab.title = "Titre d'origine : " + t.orig; body.appendChild(lab); }
   if (t.note) body.appendChild(el("div", "t-note", t.note));
   const meta = el("div", "t-meta");
   const ow = ownerOf(t);
@@ -1464,6 +1518,7 @@ function taskRow(t, ctx, opts = {}) {
     meta.appendChild(di);
   } else { meta.append(el("span", "owner-txt", OWNERS[ow].name), el("span", "due-txt", "Échéance " + fmtDayShort(due))); }
   meta.appendChild(el("span", "code", t.extra ? POLES[t.pole].code + "-+" : POLES[t.pole].code + "-" + t.id.slice(-2)));
+  if (state.canWrite && ctx === "l" && state.renaming !== t.id) { const rn = el("button", "rename-btn", "Renommer"); rn.type = "button"; rn.dataset.rename = t.id; rn.title = "Modifier le titre de la mission"; meta.appendChild(rn); }
   if (opts.phase) { const tp = el("span", "tag-ph"); tp.append(el("span", "swatch"), "Phase " + phaseOf(t.phase).n); meta.appendChild(tp); }
   meta.appendChild(el("span", null, POLES[t.pole].name));
   if (t.crit) meta.appendChild(el("span", "tag-crit", "Critique"));
@@ -1545,7 +1600,7 @@ function planRow(t, bs) {
   const cb = el("input"); cb.type = "checkbox"; cb.id = "cb-pl-" + t.id; cb.dataset.id = t.id; cb.checked = done; cb.disabled = !state.canWrite;
   cb.setAttribute("aria-label", "Marquer comme faite : " + t.label);
   const main = el("div", "pr-main");
-  const lab = el("label", "pr-label", t.label); lab.htmlFor = cb.id; main.appendChild(lab);
+  const lab = el("label", "pr-label", t.label); lab.htmlFor = cb.id; if (t.label !== t.orig) lab.title = "Titre d'origine : " + t.orig; main.appendChild(lab);
   const sub = el("div", "pr-sub");
   sub.appendChild(el("span", "m-only", OWNERS[ow].name + " · " + fmtDayShort(due)));
   if (t.crit) sub.appendChild(el("span", "tag-crit", "Critique"));
@@ -1568,7 +1623,8 @@ function planRow(t, bs) {
       l1.appendChild(s);
       const l2 = el("label"); l2.append("Pour quand ");
       const di = el("input", "mini"); di.type = "date"; di.value = due; di.dataset.dueFor = t.id; l2.appendChild(di);
-      ed.append(l1, l2);
+      const lt = el("label", "ed-title"); lt.append("Titre", titleEditor(t, "pl"));
+      ed.append(lt, l1, l2);
       const bt = bs.perTask[t.id];
       if (bt) { const bc = el("button", "bud-chip", bt.dep ? "Budget " + euro(bt.dep) : "Recette " + euro(bt.rec)); bc.type = "button"; bc.dataset.gotoBudget = t.id; ed.appendChild(bc); }
       const dn = docsWhere(d => d.task === t.id).length;
@@ -1651,7 +1707,7 @@ function renderPlanning(tasks, today, bs) {
 const rowMap = new Map(), groupMap = new Map();
 let taskOptSig = "", taskOptHTML = "";
 function taskOptions(tasks) {
-  const sig = tasks.map(t => t.id + ":" + t.label.length).join("|");
+  const sig = tasks.map(t => t.id + ":" + t.label).join("|");
   if (sig !== taskOptSig) {
     taskOptSig = sig;
     let h = '<option value="">Aucune tâche liée</option>';
@@ -1901,6 +1957,15 @@ function renderDocs(tasks) {
 
 /* ── main render ── */
 function render() {
+  const ae = document.activeElement;
+  const keep = ae && ae.matches && ae.matches(".title-in") ? { id: ae.dataset.titleFor, ctx: ae.dataset.ctx, s: ae.selectionStart, e: ae.selectionEnd } : null;
+  renderInner();
+  if (keep) {
+    const n = document.querySelector('.title-in[data-title-for="' + keep.id + '"][data-ctx="' + keep.ctx + '"]');
+    if (n && n !== document.activeElement) { n.focus(); try { n.setSelectionRange(keep.s, keep.e); } catch (err) {} }
+  }
+}
+function renderInner() {
   const tasks = computeTasks();
   const today = todayStr();
   const bs = budgetSummary();

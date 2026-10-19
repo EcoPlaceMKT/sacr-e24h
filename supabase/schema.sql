@@ -24,8 +24,8 @@ drop policy if exists "lien ajoute"   on public.items;
 drop policy if exists "lien modifie"  on public.items;
 drop policy if exists "lien supprime" on public.items;
 create policy "lien lit"      on public.items for select to anon, authenticated using (true);
-create policy "lien ajoute"   on public.items for insert to anon, authenticated with check (collection in ('checks','extra','assign','due','comments','budget','docs','people'));
-create policy "lien modifie"  on public.items for update to anon, authenticated using (true) with check (collection in ('checks','extra','assign','due','comments','budget','docs','people'));
+create policy "lien ajoute"   on public.items for insert to anon, authenticated with check (collection in ('checks','extra','assign','due','label','comments','budget','docs','people'));
+create policy "lien modifie"  on public.items for update to anon, authenticated using (true) with check (collection in ('checks','extra','assign','due','label','comments','budget','docs','people'));
 create policy "lien supprime" on public.items for delete to anon, authenticated using (true);
 
 -- 2. Le temps réel ──────────────────────────────────────────────
