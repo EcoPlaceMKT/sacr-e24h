@@ -1,0 +1,2039 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>To-do Les Sacrées 24H</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); color-scheme: light; }
+body { margin: 0; font-size: 14px; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+<style>
+/* Layout: one column. Race-bib header with a 24-loop progress strip, the three organizers as filter cards, then three views: tasks by phase, rétroplanning (phase timeline, month agenda of deadlines, milestones, organizer load) and budget (summary, bib assumptions, split by pôle, editable lines). Phase colors run from deep green to race-day red. */
+:root {
+  --paper: #F6F7F1;
+  --surface: #FFFFFF;
+  --ink: #12140F;
+  --ink-2: #565C4E;
+  --ink-3: #8A9080;
+  --line: #DDE0D4;
+  --lime: #C9F23D;
+  --on-lime: #12140F;
+  --lime-text: #4E6600;
+  --alert: #C9361A;
+  --alert-soft: #FBE8E2;
+  --ph1: #2E6B4E; --ph2: #4C8C34; --ph3: #8BB12A; --ph4: #BFA916; --ph5: #DD861B; --ph6: #D23F1B; --ph7: #8A9080;
+  --display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "Instrument Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0F110D; --surface: #171A14; --ink: #EDEFE6; --ink-2: #A9AE9E; --ink-3: #737A69;
+    --line: #2B3026; --lime: #C9F23D; --on-lime: #0F110D; --lime-text: #C9F23D;
+    --alert: #FF7D5E; --alert-soft: #3A1B12;
+    --ph1: #4FA37A; --ph2: #6DB04F; --ph3: #A6CF3D; --ph4: #E3CD3A; --ph5: #F2A443; --ph6: #FF6A42; --ph7: #8F9785;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0F110D; --surface: #171A14; --ink: #EDEFE6; --ink-2: #A9AE9E; --ink-3: #737A69;
+  --line: #2B3026; --lime: #C9F23D; --on-lime: #0F110D; --lime-text: #C9F23D;
+  --alert: #FF7D5E; --alert-soft: #3A1B12;
+  --ph1: #4FA37A; --ph2: #6DB04F; --ph3: #A6CF3D; --ph4: #E3CD3A; --ph5: #F2A443; --ph6: #FF6A42; --ph7: #8F9785;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap {
+  max-width: 960px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+  display: grid; gap: 28px;
+}
+.wrap > * { min-width: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin: 0; }
+.h-sec { margin: 0; font-family: var(--display); font-stretch: 70%; font-weight: 800; font-size: 24px; text-transform: uppercase; letter-spacing: .01em; line-height: 1.05; }
+.sub { margin: 0; font-size: 13.5px; color: var(--ink-2); max-width: 72ch; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.btn { border: 0; background: var(--ink); color: var(--paper); border-radius: 10px; padding: 8px 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.btn:disabled { opacity: .4; cursor: default; }
+.field { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 7px 10px; min-width: 0; max-width: 100%; }
+.linkbtn { border: 0; background: none; padding: 0; font-size: 13px; text-decoration: underline; color: var(--ink-2); cursor: pointer; }
+.block { border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 16px; display: grid; gap: 14px; }
+.block > * { min-width: 0; }
+.scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--phc); flex: none; }
+
+/* ── Hero ───────────────────────────── */
+.hero { display: grid; gap: 18px; }
+.brand { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 4px 10px; line-height: .9; }
+.brand .les { font-family: var(--display); font-style: italic; font-weight: 600; font-size: 26px; font-stretch: 75%; color: var(--ink-2); padding-bottom: 4px; }
+.brand .sacrees { font-family: var(--display); font-weight: 900; font-stretch: 62%; font-size: clamp(54px, 13vw, 96px); letter-spacing: -.01em; text-transform: uppercase; }
+.brand .h24 { position: relative; display: inline-flex; align-items: center; background: var(--lime); color: var(--on-lime); font-family: var(--display); font-weight: 900; font-stretch: 62%; font-size: clamp(40px, 9vw, 64px); padding: 6px 12px 2px; border-radius: 8px; transform: rotate(-3deg); margin-bottom: 6px; }
+.brand .h24 svg { position: absolute; top: -20px; right: 6px; width: 30px; height: 22px; }
+.tagline { font-family: var(--display); font-stretch: 80%; font-weight: 600; font-size: 17px; color: var(--ink-2); margin: 0; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.facts li { font-family: var(--mono); font-size: 12.5px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 11px; }
+.facts li.countdown { background: var(--ink); color: var(--paper); border-color: var(--ink); font-weight: 500; }
+.loops { display: grid; gap: 8px; }
+.loops-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px 16px; }
+.loops-head strong { font-family: var(--display); font-stretch: 70%; font-weight: 800; font-size: 22px; text-transform: uppercase; letter-spacing: .01em; }
+.loops-head span { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.strip { display: grid; grid-template-columns: repeat(24, 1fr); gap: 3px; }
+.strip i { display: block; height: 22px; border-radius: 3px; background: var(--surface); border: 1px solid var(--line); }
+.strip i.on { background: var(--lime); border-color: var(--lime); }
+.strip i:nth-child(6n) { margin-right: 3px; }
+.alerts { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; border-radius: 999px; padding: 4px 11px; border: 1px solid var(--line); background: var(--surface); max-width: 100%; }
+.pill.alert { color: var(--alert); background: var(--alert-soft); border-color: transparent; }
+.pill.ok { background: var(--lime); color: var(--on-lime); border-color: var(--lime); }
+.pill .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.sync { font-size: 12.5px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
+.sync .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); flex: none; }
+.sync.live .dot { background: var(--lime-text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--lime) 40%, transparent); }
+.sync.warn { color: var(--alert); }
+.sync.warn .dot { background: var(--alert); }
+
+/* ── Organisateurs ──────────────────── */
+.orgs { display: grid; gap: 12px; }
+.orgs-head { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px 16px; }
+.me { display: flex; align-items: center; gap: 8px; font-size: 14px; flex-wrap: wrap; }
+.org-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.org-card { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 14px; display: grid; gap: 8px; cursor: pointer; align-content: start; }
+.org-card:hover { border-color: var(--ink-3); }
+.org-card[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.org-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.org-name { font-family: var(--display); font-weight: 900; font-stretch: 62%; font-size: 30px; line-height: 1; text-transform: uppercase; }
+.org-filter { font-size: 11.5px; font-weight: 600; border-radius: 999px; padding: 2px 8px; border: 1px solid var(--line); color: var(--ink-2); white-space: nowrap; }
+.org-card[aria-pressed="true"] .org-filter { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.org-role { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--lime-text); }
+.org-scope { font-size: 13px; color: var(--ink-2); }
+.org-bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.org-bar span { display: block; height: 100%; background: var(--lime-text); width: 0; transition: width .3s; }
+.org-stats { display: flex; flex-wrap: wrap; gap: 4px 10px; font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.org-stats .a { color: var(--alert); }
+.org-next { font-size: 12.5px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.org-next b { font-family: var(--mono); font-weight: 500; color: var(--ink); }
+
+/* ── Tabs ───────────────────────────── */
+.tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--ink); flex-wrap: wrap; }
+.tab { border: 0; background: none; padding: 10px 16px 8px; font-family: var(--display); font-stretch: 75%; font-weight: 800; font-size: 19px; text-transform: uppercase; color: var(--ink-3); border-radius: 8px 8px 0 0; cursor: pointer; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { background: var(--ink); color: var(--paper); }
+.view { display: grid; gap: 24px; }
+.view > * { min-width: 0; }
+
+/* ── Controls ───────────────────────── */
+.controls { display: grid; gap: 14px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.ctl-label { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 5px 11px; font-size: 13px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.chip:hover { border-color: var(--ink-3); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.chip .n { font-family: var(--mono); font-size: 11px; opacity: .7; font-variant-numeric: tabular-nums; }
+.row { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.search { flex: 1 1 220px; min-width: 0; border: 1px solid var(--line); background: var(--paper); border-radius: 10px; padding: 8px 12px; }
+.toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; user-select: none; }
+.toggle input { width: 18px; height: 18px; accent-color: var(--ink); }
+
+/* ── Phases & tasks ─────────────────── */
+#phases { display: grid; gap: 40px; }
+.phase { display: grid; gap: 10px; scroll-margin-top: 16px; }
+.phase > * { min-width: 0; }
+.phase-head { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; align-items: end; padding-bottom: 10px; border-bottom: 3px solid var(--phc, var(--ink)); }
+.ph-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.ph-num, .ph-range, .ph-cc { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+.ph-num { letter-spacing: .06em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; }
+.ph-status { font-size: 11.5px; font-weight: 600; border-radius: 999px; padding: 2px 9px; border: 1px solid var(--line); color: var(--ink-2); }
+.ph-status.now { background: var(--lime); color: var(--on-lime); border-color: var(--lime); }
+.ph-status.late { background: var(--alert-soft); color: var(--alert); border-color: transparent; }
+.ph-status.done { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.phase h2 { margin: 2px 0 0; font-family: var(--display); font-weight: 900; font-stretch: 62%; font-size: clamp(32px, 6vw, 44px); line-height: 1; text-transform: uppercase; text-wrap: balance; grid-column: 1; }
+.ph-count { grid-column: 2; grid-row: 1 / span 2; text-align: right; display: grid; gap: 6px; justify-items: end; }
+.ph-count b { font-family: var(--mono); font-weight: 500; font-size: 14px; font-variant-numeric: tabular-nums; }
+.ph-bar { width: 96px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.ph-bar span { display: block; height: 100%; background: var(--lime-text); width: 0; transition: width .3s; }
+.ph-intro { margin: 0; color: var(--ink-2); font-size: 14px; max-width: 65ch; }
+
+.tasks { list-style: none; margin: 0; padding: 0; }
+.task { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.task.with-date { grid-template-columns: 54px 28px minmax(0, 1fr); }
+:is(.task, .pr) input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none; margin: 1px 0 0; width: 24px; height: 24px;
+  border: 2px solid var(--ink); border-radius: 6px; background: var(--surface); cursor: pointer; display: grid; place-items: center;
+}
+:is(.task, .pr) input[type="checkbox"]::after { content: ""; width: 11px; height: 6px; border-left: 2.5px solid var(--on-lime); border-bottom: 2.5px solid var(--on-lime); transform: rotate(-45deg) translate(1px, -1px); opacity: 0; }
+:is(.task, .pr) input[type="checkbox"]:checked { background: var(--lime); border-color: var(--lime); }
+:is(.task, .pr) input[type="checkbox"]:checked::after { opacity: 1; }
+:is(.task, .pr) input[type="checkbox"]:disabled { cursor: not-allowed; opacity: .6; }
+.t-date { display: grid; justify-items: center; align-content: start; line-height: 1.1; padding-top: 1px; }
+.t-date small { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); text-transform: uppercase; }
+.t-date b { font-family: var(--display); font-stretch: 70%; font-weight: 800; font-size: 22px; }
+.task.late .t-date b { color: var(--alert); }
+.t-body { display: grid; gap: 4px; min-width: 0; }
+.t-label { font-weight: 500; cursor: pointer; overflow-wrap: anywhere; }
+.task.done .t-label { color: var(--ink-3); }
+.t-note { font-size: 13.5px; color: var(--ink-2); max-width: 70ch; overflow-wrap: anywhere; }
+.task.done .t-note { display: none; }
+.t-meta { display: flex; flex-wrap: wrap; gap: 5px 10px; align-items: center; font-size: 12px; color: var(--ink-3); }
+.code { font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--ink-2); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
+.tag-crit { font-size: 11px; font-weight: 600; color: var(--alert); text-transform: uppercase; letter-spacing: .06em; }
+.tag-late { font-size: 11px; font-weight: 600; color: var(--alert); background: var(--alert-soft); border-radius: 4px; padding: 0 6px; }
+.tag-ph { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--ink-2); }
+.by { font-family: var(--mono); font-size: 11px; color: var(--lime-text); }
+.mini { border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 1px 7px; font-size: 12px; font-weight: 600; color: var(--ink); max-width: 100%; cursor: pointer; min-height: 24px; }
+.mini[type="date"] { font-family: var(--mono); font-weight: 500; font-size: 11.5px; }
+.task.late .mini[type="date"] { border-color: var(--alert); color: var(--alert); }
+.owner-txt, .due-txt { font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.bud-chip { border: 1px solid var(--line); background: transparent; border-radius: 4px; padding: 0 6px; font-family: var(--mono); font-size: 11px; color: var(--ink-2); cursor: pointer; }
+.bud-chip:hover { border-color: var(--ink); color: var(--ink); }
+.del { border: 0; background: none; padding: 0; font-size: 12px; color: var(--ink-3); text-decoration: underline; cursor: pointer; }
+.del.confirm { color: var(--alert); font-weight: 600; }
+.empty { padding: 14px 0; color: var(--ink-3); font-size: 14px; border-bottom: 1px solid var(--line); list-style: none; }
+
+.add { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; align-items: center; }
+.add input[type="text"] { flex: 1 1 260px; min-width: 0; border: 1px dashed var(--ink-3); background: transparent; border-radius: 10px; padding: 8px 12px; }
+.add .field { padding: 7px 8px; }
+.add .lbl { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-2); }
+
+/* ── Comments ───────────────────────── */
+.comments { display: grid; gap: 12px; margin-top: 6px; padding: 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+.c-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.c-item { display: grid; gap: 2px; padding-left: 12px; border-left: 2px solid var(--line); }
+.c-item.mine { border-left-color: var(--lime-text); }
+.c-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; font-size: 12.5px; }
+.c-author { font-weight: 600; }
+.c-date { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+.c-text { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; margin: 0; }
+.c-empty { font-size: 13.5px; color: var(--ink-3); }
+.c-form { display: grid; gap: 8px; }
+.c-form textarea { width: 100%; border: 1px solid var(--line); background: var(--paper); border-radius: 10px; padding: 8px 12px; resize: vertical; min-height: 46px; }
+.c-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-2); }
+
+/* ── Planning ───────────────────────── */
+.pl-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px 16px; flex-wrap: wrap; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.step button { width: 100%; height: 100%; text-align: left; display: grid; gap: 3px; align-content: start; padding: 10px; border: 1px solid var(--line); border-top: 5px solid var(--phc); border-radius: 10px; background: var(--paper); cursor: pointer; }
+.step button:hover { border-color: var(--ink-3); border-top-color: var(--phc); }
+.step.now button { background: var(--surface); box-shadow: inset 0 0 0 2px var(--ink); }
+.step.past button { opacity: .7; }
+.st-n { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.st-nm { font-family: var(--display); font-stretch: 70%; font-weight: 800; font-size: 17px; line-height: 1.05; text-transform: uppercase; }
+.st-dt { font-size: 11.5px; color: var(--ink-2); }
+.st-bar { height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 4px; }
+.st-bar i { display: block; height: 100%; background: var(--phc); }
+.st-c { font-family: var(--mono); font-size: 11px; color: var(--ink-2); }
+.st-tag { justify-self: start; font-size: 11px; font-weight: 600; border-radius: 999px; padding: 1px 8px; }
+.st-tag.now { background: var(--lime); color: var(--on-lime); }
+.st-tag.done { background: var(--ink); color: var(--paper); }
+.st-tag.late { background: var(--alert-soft); color: var(--alert); }
+.pl-form { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--ink); border-radius: 12px; background: var(--paper); }
+.pl-form .grid { display: grid; grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)); gap: 10px; }
+.pl-form label { display: grid; gap: 4px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+.pl-form .field { width: 100%; font-weight: 400; color: var(--ink); }
+.pl-form .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pl-filters { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 7px 12px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--ink-2); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.planning { display: grid; gap: 34px; }
+.pl-phase { display: grid; gap: 12px; scroll-margin-top: 16px; }
+.pl-phase-h { border-left: 6px solid var(--phc); padding: 2px 0 2px 14px; display: grid; gap: 2px; }
+.pl-ph-n { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+.pl-phase-h h3 { margin: 0; font-family: var(--display); font-weight: 900; font-stretch: 62%; font-size: clamp(30px, 6vw, 40px); line-height: 1; text-transform: uppercase; }
+.pl-ph-intro { margin: 2px 0 0; font-size: 13.5px; color: var(--ink-2); max-width: 70ch; }
+.pl-empty { margin: 0; font-size: 13.5px; color: var(--ink-3); padding-left: 20px; }
+.week { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+.week.now { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.week.past { opacity: .75; }
+.week-h { display: flex; justify-content: space-between; align-items: center; gap: 6px 12px; flex-wrap: wrap; padding: 10px 14px; background: var(--paper); border-bottom: 1px solid var(--line); }
+.wk-l { display: flex; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; }
+.week-h .rel { font-weight: 700; font-size: 15px; }
+.week.now .rel { background: var(--lime); color: var(--on-lime); border-radius: 999px; padding: 1px 10px; }
+.week-h .dates, .week-h .cnt { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+.late-block { border-color: var(--alert); }
+.late-block .week-h { background: var(--alert-soft); }
+.late-block .rel { color: var(--alert); }
+.prs { list-style: none; margin: 0; padding: 0; }
+.pr { display: grid; grid-template-columns: 24px minmax(0, 1fr) 120px 112px 78px; gap: 4px 12px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--line); }
+.prs > :first-child { border-top: 0; }
+.pr.flash { background: color-mix(in srgb, var(--lime) 30%, transparent); transition: background 1.2s; }
+.pr-main { display: grid; gap: 2px; min-width: 0; }
+.pr-label { font-weight: 500; cursor: pointer; overflow-wrap: anywhere; }
+.pr.done .pr-label { color: var(--ink-3); text-decoration: line-through; text-decoration-color: var(--ink-3); }
+.pr-sub { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 12px; color: var(--ink-3); }
+.pr-who { font-size: 13px; font-weight: 600; }
+.pr-date { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); }
+.pr.late .pr-date { color: var(--alert); font-weight: 500; }
+.pr-edit { justify-self: end; border: 1px solid var(--line); background: transparent; border-radius: 8px; padding: 3px 9px; font-size: 12px; cursor: pointer; color: var(--ink-2); }
+.pr-edit:hover { border-color: var(--ink); color: var(--ink); }
+.pr-editor { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 8px 0 2px 36px; font-size: 12.5px; color: var(--ink-2); }
+.pr-editor label { display: inline-flex; gap: 6px; align-items: center; }
+.m-only { display: none; }
+.ms-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--line); background: color-mix(in srgb, var(--lime) 16%, var(--surface)); }
+.ms-row.legal { background: var(--alert-soft); }
+.ms-txt { display: grid; gap: 1px; min-width: 0; }
+.ms-txt b { font-weight: 600; font-size: 14px; }
+.ms-txt small { font-size: 12px; color: var(--ink-2); }
+.ms-st { font-size: 11.5px; font-weight: 600; border-radius: 999px; padding: 2px 9px; border: 1px solid var(--line); color: var(--ink-2); white-space: nowrap; font-family: var(--mono); background: var(--surface); }
+.ms-st.done { background: var(--lime); color: var(--on-lime); border-color: var(--lime); }
+.ms-st.late { background: var(--alert-soft); color: var(--alert); border-color: transparent; }
+.dia { position: relative; width: 22px; height: 22px; display: grid; place-items: center; font-family: var(--mono); font-size: 10.5px; color: var(--paper); flex: none; }
+.dia::before { content: ""; position: absolute; inset: 3px; background: var(--ink); transform: rotate(45deg); border-radius: 3px; }
+.dia > b { position: relative; font-weight: 500; }
+.dia.done { color: var(--on-lime); }
+.dia.done::before { background: var(--lime); }
+.dia.late::before { background: var(--alert); }
+.dia.legal:not(.done)::before { background: var(--alert); }
+
+/* ── Budget ─────────────────────────── */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.kpi { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 4px; align-content: start; background: var(--paper); }
+.kpi .k { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.kpi .v { font-family: var(--display); font-stretch: 70%; font-weight: 800; font-size: 28px; line-height: 1.05; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.kpi .s { font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.kpi.neg { border-color: var(--alert); }
+.kpi.neg .v { color: var(--alert); }
+.kpi.pos .v { color: var(--lime-text); }
+.bud-msg { margin: 0; font-size: 13.5px; padding: 10px 12px; border-radius: 10px; background: var(--alert-soft); color: var(--alert); }
+.bud-msg.ok { background: color-mix(in srgb, var(--lime) 30%, var(--surface)); color: var(--ink); }
+.tk { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.4fr); gap: 10px; align-items: end; }
+.tk label { display: grid; gap: 4px; font-size: 12.5px; color: var(--ink-2); }
+.tk .out { display: grid; gap: 6px; font-size: 13px; }
+.tk .out b { font-family: var(--mono); font-weight: 500; }
+.fillbar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.fillbar span { display: block; height: 100%; background: var(--lime-text); }
+.bars { display: grid; gap: 10px; }
+.bar-row { display: grid; grid-template-columns: 170px minmax(0, 1fr) 150px; gap: 10px; align-items: center; font-size: 13px; }
+.bar-track { position: relative; height: 14px; border-radius: 4px; background: var(--paper); border: 1px solid var(--line); overflow: hidden; }
+.bar-plan { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--ink) 16%, transparent); }
+.bar-eng { position: absolute; inset: 0 auto 0 0; background: var(--lime-text); }
+.bar-val { font-family: var(--mono); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
+.bar-val small { display: block; color: var(--ink-3); font-size: 10.5px; }
+.bar-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--ink-2); }
+.bar-legend i { display: inline-block; width: 12px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.bl-head, .bl-l1 { display: grid; grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.25fr) 64px 92px 96px 100px minmax(0, 1.1fr); gap: 8px; align-items: center; }
+.bl-head { font-family: var(--mono); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); padding: 0 2px 4px; border-bottom: 1px solid var(--line); }
+.bl-head span:nth-child(n+3):nth-child(-n+6) { text-align: right; }
+.bl-group { display: grid; gap: 0; }
+.bl-ghead { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 12px 2px 6px; border-bottom: 1px solid var(--line); }
+.bl-ghead b { font-size: 13px; }
+.bl-ghead span { font-family: var(--mono); font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.bl-row { display: grid; gap: 6px; padding: 8px 2px; border-bottom: 1px solid var(--line); }
+.bl-row.flash { background: color-mix(in srgb, var(--lime) 30%, transparent); transition: background 1.2s; }
+.bl-l2 { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) auto; gap: 8px; align-items: center; }
+.fld { display: grid; gap: 2px; min-width: 0; }
+.fld .cap { font-family: var(--mono); font-size: 10px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.bl-l2 .fld .cap { position: static; width: auto; height: auto; clip: auto; }
+.fld input, .fld select { width: 100%; min-width: 0; border: 1px solid transparent; background: transparent; border-radius: 8px; padding: 5px 6px; font-size: 13.5px; }
+.fld input:hover, .fld select:hover { border-color: var(--line); }
+.fld input:focus, .fld select:focus { border-color: var(--ink-3); background: var(--paper); }
+.fld input[type="number"] { text-align: right; font-family: var(--mono); font-size: 13px; }
+.fld .lbl-in { font-weight: 500; }
+.planned, .real-out { text-align: right; font-family: var(--mono); font-size: 13px; font-weight: 500; padding: 5px 6px; font-variant-numeric: tabular-nums; }
+.real-out { color: var(--lime-text); }
+.hint { font-size: 11.5px; color: var(--ink-3); padding-left: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hint.late { color: var(--alert); }
+.hint.done { color: var(--lime-text); }
+.bl-tags { display: flex; gap: 8px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+.tag-est { font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-2); border: 1px dashed var(--ink-3); border-radius: 4px; padding: 0 5px; }
+.tag-tk { font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; background: var(--lime); color: var(--on-lime); border-radius: 4px; padding: 0 5px; }
+.bl-add { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding-top: 10px; }
+.bl-total { display: flex; justify-content: space-between; gap: 10px; padding: 10px 2px 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.bl-total span { font-family: var(--mono); }
+.bl-empty { font-size: 13.5px; color: var(--ink-3); padding: 12px 2px; }
+
+/* ── Documents ──────────────────────── */
+.doc-drop { border: 2px dashed var(--ink-3); border-radius: 12px; padding: 16px; display: grid; gap: 12px; background: var(--paper); }
+.doc-drop.over { border-color: var(--ink); background: color-mix(in srgb, var(--lime) 18%, var(--paper)); }
+.doc-drop .lbl { display: grid; gap: 4px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); min-width: 0; flex: 1 1 180px; }
+.doc-drop .lbl .field { width: 100%; font-weight: 400; color: var(--ink); }
+.up-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+.up-list:empty { display: none; }
+.up-list li { display: flex; gap: 8px; flex-wrap: wrap; }
+.up-list b { font-weight: 600; overflow-wrap: anywhere; }
+.up-list .err { color: var(--alert); }
+.up-list .ok { color: var(--lime-text); }
+.doc-list { list-style: none; margin: 0; padding: 0; }
+.doc { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.doc-ico { width: 44px; height: 54px; border-radius: 6px; border: 1px solid var(--line); display: grid; place-items: center; font-family: var(--mono); font-size: 10.5px; font-weight: 500; background: var(--surface); overflow: hidden; color: var(--ink-2); }
+.doc-ico.pdf { color: var(--alert); border-color: color-mix(in srgb, var(--alert) 40%, var(--line)); }
+.doc-ico img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.doc-main { display: grid; gap: 4px; min-width: 0; }
+.doc-name { font-weight: 600; font-size: 14.5px; border: 1px solid transparent; background: transparent; border-radius: 8px; padding: 3px 6px; width: 100%; min-width: 0; }
+.doc-name:hover, .doc-name:focus { border-color: var(--line); background: var(--paper); }
+.doc-meta { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 12px; color: var(--ink-3); padding-left: 6px; }
+.doc-meta select { max-width: 220px; }
+.doc-act { display: flex; gap: 12px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+.open-link { font-weight: 600; font-size: 13px; color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
+.doc-chip { display: inline-block; max-width: 240px; vertical-align: middle; font-size: 11.5px; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; color: var(--ink-2); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-chip:hover { border-color: var(--ink); color: var(--ink); }
+.att-btn { border: 1px dashed var(--ink-3); background: transparent; border-radius: 6px; font-size: 11.5px; padding: 1px 7px; cursor: pointer; color: var(--ink-2); }
+.att-btn:hover { border-color: var(--ink); color: var(--ink); }
+.bl-docs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-left: 6px; }
+.doc-btn { border: 1px solid var(--line); background: transparent; border-radius: 4px; padding: 0 6px; font-family: var(--mono); font-size: 11px; color: var(--ink-2); cursor: pointer; }
+.doc-btn:hover { border-color: var(--ink); color: var(--ink); }
+.toast { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); max-width: calc(100% - 32px); background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 10px; font-size: 14px; z-index: 30; box-shadow: 0 6px 24px rgba(0,0,0,.18); }
+.toast.err { background: var(--alert); color: #fff; }
+@media (max-width: 640px) {
+  .doc { grid-template-columns: 40px minmax(0, 1fr); }
+  .doc-act { grid-column: 1 / -1; justify-content: flex-start; padding-left: 52px; }
+  .doc-meta select { max-width: 100%; }
+}
+
+/* ── Connexion ──────────────────────── */
+.login { min-height: 100vh; display: grid; place-items: center; padding: 24px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px)); }
+.login-card { width: 100%; max-width: 440px; display: grid; gap: 16px; }
+.login-form { display: grid; gap: 8px; }
+.login-form label { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.login-form .field { padding: 11px 12px; font-size: 16px; }
+.login-form .btn { padding: 11px 14px; font-size: 15px; }
+.login-msg { margin: 0; font-size: 14px; min-height: 1.5em; }
+.login-msg.err { color: var(--alert); }
+.login-msg.ok { color: var(--lime-text); font-weight: 600; }
+.account { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 12.5px; color: var(--ink-2); }
+
+footer { font-size: 12.5px; color: var(--ink-3); display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 16px; }
+footer p { margin: 0; max-width: 78ch; }
+
+@media (max-width: 760px) {
+  .org-grid { grid-template-columns: minmax(0, 1fr); }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tk { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tk .out { grid-column: 1 / -1; }
+  .bar-row { grid-template-columns: 120px minmax(0, 1fr) 110px; }
+  .bl-head { display: none; }
+  .bl-l1 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bl-l1 .fld:first-child { grid-column: 1 / -1; }
+  .bl-l1 .fld .cap { position: static; width: auto; height: auto; clip: auto; }
+  .bl-l2 { grid-template-columns: minmax(0, 1fr); }
+  .planned, .real-out { text-align: left; }
+  .fld input[type="number"] { text-align: left; }
+  .fld input, .fld select { border-color: var(--line); }
+}
+@media (max-width: 860px) {
+  .steps { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .pl-form .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pl-form .grid label:first-child { grid-column: 1 / -1; }
+}
+@media (max-width: 640px) {
+  .pr { grid-template-columns: 24px minmax(0, 1fr) auto; }
+  .pr-who, .pr-date { display: none; }
+  .m-only { display: inline; color: var(--ink-2); font-weight: 600; }
+  .pr.late .m-only { color: var(--alert); }
+  .pr-editor { padding-left: 0; }
+}
+@media (max-width: 520px) {
+  .strip i { height: 16px; }
+  .strip i:nth-child(6n) { margin-right: 0; }
+  .phase-head { grid-template-columns: 1fr; }
+  .ph-count { grid-column: 1; grid-row: auto; justify-items: start; text-align: left; grid-auto-flow: column; align-items: center; }
+  .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pl-form .grid { grid-template-columns: minmax(0, 1fr); }
+  .tab { font-size: 16px; padding: 9px 10px 7px; }
+  .task.with-date { grid-template-columns: 40px 26px minmax(0, 1fr); gap: 8px; }
+  .bar-row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .bar-val { text-align: left; }
+  .kpi .v { font-size: 24px; }
+}
+@media (prefers-reduced-motion: reduce) { .ph-bar span, .org-bar span, .bl-row.flash, .pr.flash { transition: none; } }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+</head>
+<body>
+
+<div class="login" id="login" hidden>
+  <div class="login-card">
+    <div class="brand" aria-label="Les Sacrées 24H">
+      <span class="les">les</span><span class="sacrees">Sacrées</span>
+      <span class="h24"><svg viewBox="0 0 30 22" aria-hidden="true"><path d="M2 20 L4 6 L10 13 L15 2 L20 13 L26 6 L28 20 Z" fill="var(--ink)"/></svg>24H</span>
+    </div>
+    <p class="tagline">Espace organisateurs</p>
+    <form class="login-form" id="login-form">
+      <label for="login-email">Ton adresse e-mail</label>
+      <input class="field" type="email" id="login-email" autocomplete="email" required placeholder="prenom@exemple.fr">
+      <button class="btn" type="submit" id="login-btn">Recevoir mon lien de connexion</button>
+    </form>
+    <p class="login-msg" id="login-msg" role="status"></p>
+    <p class="sub">Accès réservé à l'équipe d'organisation. Pas de mot de passe : un lien de connexion arrive par e-mail.</p>
+  </div>
+</div>
+
+<div id="app" hidden>
+<div class="wrap">
+  <header class="hero">
+    <div class="brand" aria-label="Les Sacrées 24H">
+      <span class="les">les</span>
+      <span class="sacrees">Sacrées</span>
+      <span class="h24"><svg viewBox="0 0 30 22" aria-hidden="true"><path d="M2 20 L4 6 L10 13 L15 2 L20 13 L26 6 L28 20 Z" fill="var(--ink)"/></svg>24H</span>
+    </div>
+    <p class="tagline">To-do d'organisation · la course qui te fait tourner en boucle</p>
+    <ul class="facts">
+      <li class="countdown" id="countdown">J-…</li>
+      <li>Sam. 22 mai 2027 · départ 12 h 00</li>
+      <li>Champagne Charles Heston · Villers-Franqueux</li>
+      <li>150 dossards · solo</li>
+      <li>24 boucles × 6,7056 km</li>
+    </ul>
+    <div class="loops">
+      <div class="loops-head">
+        <strong id="loops-title">0 boucle bouclée sur 24</strong>
+        <span id="loops-count">0 / 0 tâches · 0 %</span>
+      </div>
+      <div class="strip" id="strip" aria-hidden="true"></div>
+    </div>
+    <div class="alerts" id="alerts"></div>
+    <div class="sync" id="sync" role="status"><span class="dot"></span><span id="sync-text">Connexion à la base partagée…</span></div>
+    <div class="account"><span id="account-email"></span><button class="linkbtn" type="button" id="logout">Se déconnecter</button></div>
+  </header>
+
+  <section class="orgs" aria-labelledby="orgs-title">
+    <div class="orgs-head">
+      <div>
+        <p class="eyebrow">Qui fait quoi</p>
+        <h2 class="h-sec" id="orgs-title">Organisateurs</h2>
+      </div>
+      <label class="me" for="me">Je suis
+        <select id="me" class="field">
+          <option value="">choisir…</option>
+          <option value="matheo">Mathéo</option>
+          <option value="theo">Théo</option>
+          <option value="tom">Tom</option>
+          <option value="paul">Paul</option>
+        </select>
+      </label>
+    </div>
+    <p class="sub">Touche une carte pour n'afficher que les tâches de cet organisateur, dans la liste comme dans le planning. Chaque tâche a un responsable par défaut selon son pôle ; tu peux le changer sur la tâche.</p>
+    <div class="org-grid" id="org-grid"></div>
+  </section>
+
+  <div class="tabs" role="tablist" aria-label="Vue">
+    <button class="tab" role="tab" id="tab-list" aria-controls="view-list" data-view="list">Tâches</button>
+    <button class="tab" role="tab" id="tab-retro" aria-controls="view-retro" data-view="retro">Rétroplanning</button>
+    <button class="tab" role="tab" id="tab-budget" aria-controls="view-budget" data-view="budget">Budget</button>
+    <button class="tab" role="tab" id="tab-docs" aria-controls="view-docs" data-view="docs">Documents</button>
+  </div>
+
+  <!-- ═════════ Vue tâches ═════════ -->
+  <div class="view" id="view-list" role="tabpanel" aria-labelledby="tab-list">
+    <section class="controls" aria-label="Filtres">
+      <div>
+        <p class="ctl-label">Phase</p>
+        <div class="chips" id="phase-chips"></div>
+      </div>
+      <div>
+        <p class="ctl-label">Pôle</p>
+        <div class="chips" id="pole-chips"></div>
+      </div>
+      <div class="row">
+        <input class="search" id="q" type="search" placeholder="Chercher une tâche (ex. DPS, Sacem, vignerons)" aria-label="Chercher une tâche">
+        <label class="toggle"><input type="checkbox" id="crit-only"> Critiques seulement</label>
+        <label class="toggle"><input type="checkbox" id="hide-done"> Masquer les tâches faites</label>
+        <button class="linkbtn" id="reset" type="button" hidden>Effacer les filtres</button>
+      </div>
+    </section>
+    <main id="phases"></main>
+  </div>
+
+  <!-- ═════════ Vue rétroplanning ═════════ -->
+  <div class="view" id="view-retro" role="tabpanel" aria-labelledby="tab-retro" hidden>
+    <section class="block" aria-labelledby="pl-title">
+      <div class="pl-head">
+        <div>
+          <p class="eyebrow">Octobre 2026 → juin 2027</p>
+          <h2 class="h-sec" id="pl-title">Planning semaine par semaine</h2>
+        </div>
+        <button class="btn" type="button" id="pl-add-toggle" aria-expanded="false" aria-controls="pl-form">+ Ajouter une tâche</button>
+      </div>
+      <form class="pl-form" id="pl-form" hidden>
+        <div class="grid">
+          <label for="pl-label">Quoi ?<input class="field" type="text" id="pl-label" maxlength="300" placeholder="Ex. Réserver la sono"></label>
+          <label for="pl-date">Pour quand ?<input class="field" type="date" id="pl-date"></label>
+          <label for="pl-owner">Qui s'en occupe ?<select class="field" id="pl-owner"></select></label>
+          <label for="pl-pole">Pôle<select class="field" id="pl-pole"></select></label>
+        </div>
+        <div class="actions">
+          <button class="btn" type="submit">Ajouter au planning</button>
+          <button class="btn ghost" type="button" id="pl-cancel">Annuler</button>
+          <span class="sub" id="pl-phase-hint"></span>
+        </div>
+      </form>
+      <ol class="steps" id="steps" aria-label="Les 7 étapes jusqu'à la course"></ol>
+      <div class="pl-filters">
+        <div class="seg" role="group" aria-label="Afficher les tâches de" id="pl-owner-seg"></div>
+        <label class="toggle"><input type="checkbox" id="pl-hide-done"> Masquer les tâches faites</label>
+        <button class="linkbtn" type="button" id="pl-past" hidden></button>
+      </div>
+    </section>
+    <div class="planning" id="planning"></div>
+  </div>
+
+  <!-- ═════════ Vue budget ═════════ -->
+  <div class="view" id="view-budget" role="tabpanel" aria-labelledby="tab-budget" hidden>
+    <section class="block" aria-labelledby="b-title">
+      <div>
+        <p class="eyebrow">Prévisionnel et réel</p>
+        <h2 class="h-sec" id="b-title">Budget</h2>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <p class="bud-msg" id="bud-msg" hidden></p>
+    </section>
+
+    <section class="block" aria-labelledby="tk-title">
+      <div>
+        <h2 class="h-sec" id="tk-title">Dossards</h2>
+        <p class="sub">Ces trois chiffres pilotent la recette « Inscriptions » et le point mort.</p>
+      </div>
+      <div class="tk" id="tk">
+        <label for="tk-price">Prix moyen du dossard (€)<input class="field" type="number" id="tk-price" min="0" step="1" inputmode="decimal"></label>
+        <label for="tk-qty">Dossards prévus<input class="field" type="number" id="tk-qty" min="0" step="1" inputmode="numeric"></label>
+        <label for="tk-sold">Dossards vendus à ce jour<input class="field" type="number" id="tk-sold" min="0" step="1" inputmode="numeric"></label>
+        <div class="out" id="tk-out"></div>
+      </div>
+      <div id="tk-missing" hidden>
+        <p class="sub">Aucune ligne de recette n'est marquée comme dossards.</p>
+        <button class="btn" type="button" id="tk-create">Créer la ligne Inscriptions</button>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="rp-title">
+      <h2 class="h-sec" id="rp-title">Dépenses par pôle</h2>
+      <div class="bar-legend"><span><i style="background: color-mix(in srgb, var(--ink) 16%, transparent)"></i>Prévu</span><span><i style="background: var(--lime-text)"></i>Engagé ou payé</span></div>
+      <div class="bars" id="bars"></div>
+    </section>
+
+    <section class="block" aria-labelledby="dep-title">
+      <div>
+        <h2 class="h-sec" id="dep-title">Dépenses</h2>
+        <p class="sub">Tout est modifiable : clique dans un champ, change la valeur, elle s'enregistre pour toute l'équipe. Les lignes marquées « Estimation » sont des ordres de grandeur à remplacer par vos devis.</p>
+      </div>
+      <div class="bl-head" aria-hidden="true"><span>Libellé</span><span>Pôle</span><span>Qté</span><span>Prix unit.</span><span>Prévu</span><span>Réel</span><span>Statut</span></div>
+      <div id="dep-groups"></div>
+      <div class="bl-total" id="dep-total"></div>
+      <div class="bl-add" data-add="dep">
+        <select class="field" id="dep-add-pole" aria-label="Pôle de la nouvelle dépense"></select>
+        <button class="btn" type="button" id="dep-add">Ajouter une dépense</button>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="rec-title">
+      <h2 class="h-sec" id="rec-title">Recettes</h2>
+      <div class="bl-head" aria-hidden="true"><span>Libellé</span><span>Pôle</span><span>Qté</span><span>Prix unit.</span><span>Prévu</span><span>Réel</span><span>Statut</span></div>
+      <div id="rec-groups"></div>
+      <div class="bl-total" id="rec-total"></div>
+      <div class="bl-add" data-add="rec">
+        <select class="field" id="rec-add-pole" aria-label="Pôle de la nouvelle recette"></select>
+        <button class="btn" type="button" id="rec-add">Ajouter une recette</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ═════════ Vue documents ═════════ -->
+  <div class="view" id="view-docs" role="tabpanel" aria-labelledby="tab-docs" hidden>
+    <section class="block" aria-labelledby="doc-title">
+      <div>
+        <p class="eyebrow">Devis, factures, sécurité, archives</p>
+        <h2 class="h-sec" id="doc-title">Documents</h2>
+      </div>
+      <p class="sub">Dépose ici les fichiers de l'organisation. Toute l'équipe les voit, et chacun peut être relié à une tâche ou à une ligne de budget.</p>
+      <div class="doc-drop" id="doc-drop">
+        <div class="row">
+          <label class="lbl" for="up-cat">Type de document<select class="field" id="up-cat"></select></label>
+          <label class="lbl" for="up-task">Tâche liée (facultatif)<select class="field" id="up-task"></select></label>
+          <label class="lbl" for="up-line">Ligne de budget (facultatif)<select class="field" id="up-line"></select></label>
+        </div>
+        <div class="row">
+          <button class="btn" type="button" id="up-pick">Choisir des fichiers</button>
+          <span class="sub">ou glisse-les ici · PDF ou image (JPG, PNG), 20 Mo maximum par fichier</span>
+        </div>
+        <input type="file" id="up-input" multiple accept=".pdf,application/pdf,image/png,image/jpeg,image/webp" hidden>
+        <ul class="up-list" id="up-list" aria-live="polite"></ul>
+      </div>
+      <p class="bud-msg ok" id="up-locked" hidden></p>
+      <p class="sub" id="doc-usage" hidden></p>
+    </section>
+    <section class="block" aria-labelledby="doc-list-title">
+      <h2 class="h-sec" id="doc-list-title">Classeur</h2>
+      <div class="chips" id="doc-cats"></div>
+      <div class="row">
+        <input class="search" id="doc-q" type="search" placeholder="Chercher un document" aria-label="Chercher un document">
+        <span class="sub" id="doc-filter-note"></span>
+        <button class="linkbtn" type="button" id="doc-clear" hidden>Tout afficher</button>
+      </div>
+      <ul class="doc-list" id="doc-list"></ul>
+      <p class="bl-empty" id="doc-empty" hidden></p>
+    </section>
+  </div>
+
+  <footer>
+    <p><b>Critique</b> : obligation légale ou point de sécurité sans lequel la course ne peut pas partir. Les dates limites sont des cibles de travail ; la seule échéance réglementaire ferme est la déclaration, au plus tard le 22 mars 2027.</p>
+    <p>Tâches, dates, responsables, commentaires, budget et documents sont partagés en direct avec toute l'équipe connectée.</p>
+  </footer>
+</div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+const TASKS = [["org01","p1","org",1,"2026-10-30","Fixer la gouvernance : qui pilote quel pôle, qui signe, qui tient la caisse"],
+["org02","p1","org",1,"2026-10-30","Choisir la structure porteuse de l'événement (association loi 1901 recommandée)","C'est elle qui déclare la course, s'assure, encaisse les inscriptions et signe les conventions."],
+["org03","p1","org",0,"2026-11-20","Déclarer l'association en préfecture (statuts, bureau) et demander un numéro SIRET","Le SIRET est demandé dans la plupart des dossiers de subvention."],
+["org04","p1","org",0,"2026-11-27","Ouvrir un compte bancaire dédié à l'événement"],
+["org05","p1","org",1,"2026-11-13","Monter le budget prévisionnel complet : dépenses, recettes, point mort","Lignes à ne pas oublier : secours, médecin, chrono, assurance, toilettes, locations, électricité, balisage, impression, lots, t-shirts, repas bénévoles, Sacem, frais de paiement en ligne, 10 % d'imprévus."],
+["org06","p1","org",0,"2026-11-20","Fixer le prix du dossard à partir du point mort (150 dossards)"],
+["org07","p1","org",0,"2026-11-27","Lister les dépenses à avancer avant les premières recettes (acomptes) et prévoir la trésorerie"],
+["org08","p1","org",0,"2026-10-23","Créer le rétroplanning et caler une réunion d'équipe hebdomadaire (bi-hebdo à partir d'avril)"],
+["org09","p1","org",0,"2026-10-23","Créer un drive partagé : conventions, devis, plans, contacts, visuels"],
+["reg01","p1","reg",1,"2026-11-06","Lister les communes traversées par la boucle","Une seule commune : la déclaration se fait en mairie. Plusieurs communes : à la préfecture de la Marne."],
+["reg02","p1","reg",1,"2026-12-11","Signer une convention de mise à disposition avec Champagne Charles Heston","Espaces utilisés, horaires de montage et démontage, électricité, eau, sanitaires, stationnement, dégâts éventuels, assurance."],
+["reg03","p1","reg",1,"2026-12-11","Souscrire l'assurance responsabilité civile organisateur","Obligatoire pour l'organisateur. L'attestation fait partie du dossier de déclaration."],
+["reg04","p1","reg",1,"2026-11-20","Contacter la commission départementale des courses hors stade (FFA Marne) et inscrire la course au calendrier FFA","Pour une compétition avec classement, la déclaration doit être accompagnée de l'avis de la fédération."],
+["reg05","p1","reg",1,"2026-11-13","Demander des devis de dispositif de secours (DPS) à des associations agréées de sécurité civile","Seules ces associations peuvent tenir un DPS (Croix-Rouge, Protection civile…). Les équipes se réservent tôt pour le mois de mai."],
+["reg06","p1","reg",1,"2026-12-04","Trouver le médecin de course","Les règles FFA hors stade imposent la présence d'au moins un médecin."],
+["reg07","p1","reg",0,"2026-11-13","Rencontrer le maire de Villers-Franqueux pour présenter le projet"],
+["reg08","p1","reg",0,"2026-11-06","Lire les règles techniques et de sécurité FFA hors stade et noter ce qui s'applique à la course"],
+["par01","p1","par",1,"2026-11-06","Tracer la boucle et la mesurer précisément : 6,7056 km","Distance officielle d'une boucle backyard. Mesurer à la roue et recouper avec plusieurs relevés GPS."],
+["par02","p1","par",0,"2026-11-06","Décider : boucle unique jour et nuit, ou boucle trail le jour et boucle route la nuit","Le double tracé est courant en backyard, mais il double le balisage, les autorisations et les signaleurs."],
+["par03","p1","par",1,"2026-11-20","Identifier les propriétaires et exploitants de chaque portion du tracé (vignes, chemins ruraux, bois)"],
+["par04","p1","par",0,"2026-11-27","Vérifier si le tracé touche une zone Natura 2000 ou protégée","Si oui, une évaluation des incidences est à joindre au dossier."],
+["par05","p1","par",1,"2026-11-27","Écrire le règlement de course","Départ toutes les heures, avertissements à 3, 2 et 1 minute, aucun départ en retard, aucune aide personnelle sur la boucle, bâtons interdits, coureurs éliminés hors du parcours, 18 ans minimum, licence FFA ou PPS."],
+["par06","p1","par",1,"2026-11-27","Écrire noir sur blanc la fin à 24 h et la règle de départage","Votre choix : le plus rapide sur la dernière boucle si plusieurs coureurs sont encore en course. Le règlement officiel backyard prévoit au contraire qu'il n'y a pas de vainqueur dans ce cas : votre règle doit être explicite."],
+["par07","p1","par",0,"2026-12-11","Décider si la course est inscrite au calendrier officiel Backyard Ultra sous le nom « Backyard 24 »","Les courses à fin fixée jusqu'à 24 h sont admises sous ce nom. Vérifier que votre départage au chrono est accepté."],
+["par08","p1","par",1,"2026-11-27","Choisir et réserver le prestataire de chronométrage","Puces, tapis à l'arche, temps au tour, résultats en direct. Indispensable pour départager au temps de la dernière boucle."],
+["cou01","p1","cou",1,"2026-11-13","Valider la solution de billetterie intégrée au site","Paiement en ligne, saisie et contrôle du numéro de licence ou de PPS, contact d'urgence, export de la liste de départ."],
+["cou02","p1","cou",1,"2026-11-20","Rédiger les conditions générales de vente","Remboursement, transfert de dossard, annulation par la préfecture ou pour météo, liste d'attente."],
+["cou03","p1","cou",1,"2026-11-20","Finaliser le formulaire d'inscription","Identité, date de naissance (18 ans révolus), licence FFA ou Pass Prévention Santé, contact d'urgence, taille de t-shirt, acceptation du règlement, droit à l'image, consentement RGPD."],
+["cou04","p1","cou",0,"2026-12-04","Prévenir les coureurs non licenciés que le Pass Prévention Santé est payant (5 €/an) et valable un an","Depuis janvier 2026, le PPS est devenu le Pass Prévention Santé."],
+["cou05","p1","cou",0,"2026-11-20","Fixer les paliers de prix (tarif lancement, plein tarif) et la date de bascule"],
+["cou06","p1","cou",0,"2026-12-04","Prévoir une liste d'attente automatique une fois les 150 dossards vendus"],
+["cou07","p1","cou",0,"2026-12-11","Proposer une assurance individuelle accident et annulation aux coureurs","L'organisateur doit informer les participants de l'intérêt de souscrire une assurance de personnes."],
+["vil01","p1","vil",0,"2026-12-04","Écrire le concept du Village Backyard : zones, publics visés, horaires d'ouverture"],
+["vil02","p1","vil",1,"2026-11-27","Clarifier avec la maison de champagne qui vend le champagne, sous quelle licence et sur quels espaces"],
+["vil03","p1","vil",0,"2026-12-18","Choisir le modèle food : food trucks, traiteur ou buvette tenue par l'équipe"],
+["spo01","p1","spo",0,"2026-11-27","Écrire la plaquette partenaires : concept, audience, offres, contreparties"],
+["spo02","p1","spo",0,"2026-11-20","Construire trois niveaux d'offre et des offres à nommer (boucle de minuit, lever du soleil, ravito, espace récup)"],
+["spo03","p1","spo",0,"2026-12-04","Lister 50 prospects locaux","Magasins running de Reims, équipementiers, entreprises du Grand Reims, banques, assurances, concessions, artisans."],
+["spo04","p1","spo",0,"2026-12-11","Repérer les subventions possibles : Ville de Reims / Grand Reims, Département de la Marne, Région Grand Est","Relever les dates limites de dépôt, souvent plusieurs mois avant l'événement."],
+["com01","p1","com",1,"2026-11-13","Terminer et mettre en ligne le site officiel","Format, règlement, inscription, infos pratiques, village, partenaires, FAQ, bénévoles."],
+["com02","p1","com",0,"2026-10-30","Décliner la charte du logo (couleurs, typos, usages) pour tous les supports"],
+["com03","p1","com",0,"2026-10-30","Créer une adresse mail de contact et les comptes Instagram, Facebook, TikTok et un club Strava"],
+["com04","p1","com",1,"2026-11-27","Faire valider la communication au regard de la loi Évin","Un événement sportif ne peut pas servir de support de publicité pour l'alcool. Nommer le domaine comme lieu de course est une chose ; le présenter comme sponsor ou mettre le champagne en avant en est une autre. À faire relire par un juriste."],
+["com05","p1","com",0,"2026-12-04","Annoncer la date et l'ouverture des inscriptions (réseaux, newsletter, groupes trail de la région)"],
+["com06","p1","com",0,"2026-12-18","Référencer la course sur les calendriers running (calendrier FFA, sites trail et ultra, calendrier Backyard si retenu)"],
+["ben01","p1","ben",0,"2026-12-11","Estimer les besoins en bénévoles par poste et par créneau sur 24 h, montage et démontage compris"],
+["ben02","p1","ben",0,"2026-12-18","Créer le formulaire bénévole : disponibilités, postes souhaités, taille de tenue, permis de conduire"],
+["log01","p1","log",0,"2026-12-04","Faire un premier plan d'implantation : corral, arche, camp coureurs, village, parking, poste de secours"],
+["log02","p1","log",0,"2026-11-20","Vérifier la couverture 4G sur le site (chrono en direct, paiement par carte, téléphones)"],
+["log03","p1","log",0,"2026-12-18","Étudier l'accès depuis Reims : parking, covoiturage, navette depuis la gare"],
+["org10","p2","org",0,"2027-01-22","Passer au budget v2 avec les devis réels"],
+["org11","p2","org",1,"2027-01-15","Signer les devis prioritaires et verser les acomptes : secours, chrono, toilettes, locations"],
+["org12","p2","org",0,"2027-01-29","Tenir un suivi partagé des dépenses et des recettes, mis à jour chaque mois"],
+["org13","p2","org",0,"2027-02-12","Déposer le nom et le logo à l'INPI si l'événement a vocation à durer"],
+["reg09","p2","reg",1,"2027-01-29","Obtenir l'accord écrit de chaque propriétaire ou exploitant traversé"],
+["reg10","p2","reg",0,"2027-02-05","Prévenir les vignerons riverains pour qu'aucun traitement des vignes n'ait lieu le long de la boucle ce week-end-là","Mai est une période de traitements : à caler avec eux bien en amont."],
+["reg11","p2","reg",1,"2027-01-22","Dimensionner le DPS avec l'association retenue et signer la convention","Le dimensionnement tient compte du nombre de coureurs, du public attendu, de la durée et de la nuit."],
+["reg12","p2","reg",0,"2027-01-29","Définir des points d'accès secours numérotés sur la boucle et les reporter sur une carte"],
+["reg13","p2","reg",0,"2027-02-05","Si la boucle croise des routes : lister les points de croisement et le nombre de signaleurs","Les signaleurs doivent être majeurs, titulaires du permis de conduire et nommés dans le dossier."],
+["reg14","p2","reg",0,"2027-02-05","Si des tentes ou chapiteaux reçoivent du public : exiger du loueur les registres de sécurité et demander en mairie si une commission de sécurité est nécessaire"],
+["reg15","p2","reg",1,"2027-02-05","Préparer le dossier de déclaration","Formulaire Cerfa, règlement, plan du parcours, dispositif de secours, liste des signaleurs, attestation d'assurance."],
+["reg16","p2","reg",1,"2027-02-14","Obtenir l'avis de la FFA sur le dossier"],
+["par09","p2","par",0,"2027-01-15","Valider le tracé définitif après une reconnaissance à pied de jour et de nuit"],
+["par10","p2","par",1,"2027-01-29","Fixer l'emplacement et la taille du corral pour 150 coureurs","Règle backyard : le corral garde la même taille du début à la fin."],
+["par11","p2","par",0,"2027-02-05","Choisir le signal de départ (cloche, corne) et une horloge géante visible depuis le camp"],
+["par12","p2","par",0,"2027-02-05","Définir le ravitaillement commun au village et un éventuel point d'eau sur la boucle","L'aide personnelle n'est permise qu'entre deux boucles."],
+["par13","p2","par",0,"2027-01-22","Fixer le matériel obligatoire : frontale et éclairage de secours la nuit, gobelet, téléphone"],
+["par14","p2","par",1,"2027-02-12","Définir le protocole de comptage à chaque boucle et le serre-file","Compter les sorties et les retours à chaque tour. Un vélo ou un coureur balai ferme chaque boucle, surtout la nuit."],
+["cou08","p2","cou",1,"2027-01-08","Tester le parcours d'inscription et le paiement de bout en bout avant de relancer les ventes"],
+["cou09","p2","cou",1,"2027-02-12","Contrôler chaque licence ou PPS à l'inscription et relancer les dossiers incomplets"],
+["cou10","p2","cou",0,"2027-01-29","Concevoir le dossard : numéro, prénom, numéro d'urgence au dos"],
+["cou11","p2","cou",0,"2027-02-12","Choisir et commander le cadeau coureur et les t-shirts","Compter plusieurs semaines de fabrication."],
+["vil04","p2","vil",0,"2027-01-22","Réserver le DJ et définir les créneaux musicaux","Garder le calme près du camp coureurs la nuit : certains dorment entre deux boucles."],
+["vil05","p2","vil",0,"2027-01-29","Contacter les food trucks : redevance, électricité, eau, horaires sur 24 h"],
+["vil06","p2","vil",0,"2027-02-12","Monter l'espace récupération : école de kiné ou d'ostéo, masseurs, étirements"],
+["vil07","p2","vil",0,"2027-02-05","Prévoir toilettes, douches pour les coureurs et points d'eau potable"],
+["vil08","p2","vil",0,"2027-02-12","Programmer les temps forts des 24 h","Départ à midi, coucher de soleil, boucle de minuit, lever du jour, dernière boucle, remise des prix."],
+["spo05","p2","spo",0,"2027-01-15","Envoyer la plaquette et relancer chaque prospect 10 jours plus tard"],
+["spo06","p2","spo",0,"2027-01-29","Déposer les dossiers de subvention"],
+["spo07","p2","spo",0,"2027-02-12","Chercher des partenaires en nature : eau, ravitaillement, matériel, lots, impression"],
+["spo08","p2","spo",0,"2027-01-15","Rédiger un modèle de convention de partenariat (contreparties, logos, délais)"],
+["com07","p2","com",0,"2027-01-08","Construire le plan éditorial jusqu'à mai : rythme, formats, thèmes","Le format backyard, les coulisses, les coureurs inscrits, le village."],
+["com08","p2","com",0,"2027-01-22","Expliquer le format backyard en une vidéo courte"],
+["com09","p2","com",0,"2027-01-29","Contacter la presse locale : L'Union, ICI Champagne-Ardenne, France 3 Champagne-Ardenne"],
+["com10","p2","com",0,"2027-02-05","Démarcher les clubs d'athlé et de trail de la Marne et les magasins running de Reims (affiches, codes club)"],
+["com11","p2","com",0,"2027-01-15","Lancer une newsletter pour les inscrits et les intéressés"],
+["com12","p2","com",0,"2027-02-12","Inviter 3 à 5 coureurs ou créateurs de contenu running de la région"],
+["com13","p2","com",0,"2027-02-12","Traduire les infos clés en anglais : le format attire des coureurs étrangers"],
+["ben03","p2","ben",0,"2027-01-15","Lancer le recrutement bénévoles : site, clubs, écoles, associations étudiantes, réseau perso"],
+["ben04","p2","ben",0,"2027-01-29","Nommer un responsable bénévoles et un chef par poste"],
+["log04","p2","log",0,"2027-01-15","Lister tout le matériel et marquer pour chaque élément : prêté, loué ou acheté"],
+["log05","p2","log",0,"2027-01-29","Demander les devis de location","Barrières, tentes, tables, chaises, groupe électrogène, éclairage, sono, talkies-walkies."],
+["log06","p2","log",0,"2027-02-12","Commander le balisage : rubalise biodégradable, flèches, repères réfléchissants pour la nuit"],
+["log07","p2","log",0,"2027-02-12","Organiser la gestion des déchets : tri, gobelets réutilisables, zéro vaisselle jetable"],
+["reg17","p3","reg",1,"2027-03-05","Déposer la déclaration en mairie ou en préfecture, au plus tard le 22 mars 2027","Le délai est d'au moins deux mois pour une course avec classement. Viser début mars pour garder de la marge."],
+["reg18","p3","reg",1,"2027-03-12","Si l'association vend de l'alcool : demander l'autorisation temporaire de débit de boissons en mairie"],
+["reg19","p3","reg",0,"2027-03-12","Demander les arrêtés de circulation et de stationnement si des routes ou parkings publics sont utilisés"],
+["reg20","p3","reg",0,"2027-03-19","Déclarer la diffusion musicale à la Sacem"],
+["reg21","p3","reg",0,"2027-03-12","Vérifier en mairie si la soirée DJ demande une dérogation bruit"],
+["reg22","p3","reg",0,"2027-03-19","Informer la gendarmerie et les pompiers (SDIS) de la date et du dispositif"],
+["reg23","p3","reg",1,"2027-03-19","Écrire le plan de crise","Chaleur, orage, coureur qui ne rentre pas, accident grave, suspension ou arrêt de la course : qui décide, qui prévient qui."],
+["par15","p3","par",0,"2027-03-05","Fixer les seuils d'alerte météo et la règle en cas de suspension","Une backyard ne se met pas en pause facilement : décider à l'avance ce que deviennent les boucles en cours."],
+["par16","p3","par",0,"2027-03-12","Définir la gestion des abandons : signalement au chrono, récupération de la puce, sortie du parcours"],
+["par17","p3","par",0,"2027-03-19","Valider avec le chrono : tapis à l'arche, temps au tour, écran en direct au village"],
+["cou12","p3","cou",0,"2027-03-19","Rédiger le guide du coureur","Accès, horaires, retrait des dossards, camp de base, matériel, règles, ravitaillement, secours, numéros utiles."],
+["cou13","p3","cou",0,"2027-03-12","Organiser le camp de base : emplacements numérotés pour 150 coureurs et leurs assistants"],
+["cou14","p3","cou",0,"2027-03-05","Fixer les règles des assistants : aide seulement entre deux boucles, au camp"],
+["vil09","p3","vil",0,"2027-02-26","Signer les food trucks et le DJ"],
+["vil10","p3","vil",0,"2027-03-05","Réserver les toilettes et, si retenues, les douches mobiles"],
+["vil11","p3","vil",0,"2027-03-12","Choisir le speaker et organiser ses relais sur 24 h"],
+["vil12","p3","vil",0,"2027-03-19","Prévoir l'accès des personnes à mobilité réduite au village"],
+["spo09","p3","spo",0,"2027-03-12","Signer les conventions partenaires et récupérer les logos en haute définition"],
+["spo10","p3","spo",0,"2027-03-19","Commander les supports partenaires : banderoles, beach flags, habillage de l'arche","Faire relire les visuels au regard de la loi Évin."],
+["com14","p3","com",0,"2027-03-05","Lancer la campagne « derniers dossards » avant le changement de palier"],
+["com15","p3","com",0,"2027-02-26","Réserver le ou les photographes et un vidéaste pour l'aftermovie"],
+["com16","p3","com",0,"2027-03-19","Préparer le dossier de presse"],
+["ben05","p3","ben",0,"2027-03-19","Construire le planning bénévoles : créneaux de 3 à 4 h, nuit couverte, remplaçants"],
+["ben06","p3","ben",0,"2027-03-19","Rédiger une fiche par poste : mission, horaires, chef de poste, consignes de sécurité"],
+["log08","p3","log",0,"2027-03-05","Valider le plan d'implantation définitif avec la maison de champagne et l'équipe de secours"],
+["log09","p3","log",0,"2027-03-12","Réserver le groupe électrogène ou le raccordement électrique et nommer un référent électricité"],
+["log10","p3","log",0,"2027-03-19","Prévoir l'éclairage de nuit : corral, camp, village et passages délicats de la boucle"],
+["org14","p4","org",0,"2027-04-09","Faire un point budget et ajuster selon les inscriptions et les partenaires"],
+["org15","p4","org",0,"2027-04-16","Tenir une réunion de coordination générale avec tous les pôles, les secours, le médecin et le chrono"],
+["reg24","p4","reg",1,"2027-04-30","Récupérer le récépissé de déclaration ou l'arrêté, à garder sur soi le jour J"],
+["reg25","p4","reg",0,"2027-05-14","Envoyer l'attestation d'assurance si elle n'était pas jointe au dossier","Au plus tard six jours avant la course."],
+["reg26","p4","reg",0,"2027-05-07","Transmettre aux secours et au médecin : plan, points d'accès, horaires, liste des contacts"],
+["par18","p4","par",0,"2027-04-16","Faire une boucle test de nuit avec quelques coureurs : éclairage, balisage, temps de passage"],
+["par19","p4","par",0,"2027-05-07","Imprimer les cartes : parcours, accès secours, signaleurs, plan du site"],
+["par20","p4","par",0,"2027-05-07","Préparer les annonces de départ : 3, 2 et 1 minute, puis le signal"],
+["cou15","p4","cou",0,"2027-04-22","Envoyer le mail J-30 avec le guide du coureur"],
+["cou16","p4","cou",1,"2027-05-07","Boucler le contrôle des licences et PPS et relancer les derniers dossiers"],
+["cou17","p4","cou",0,"2027-05-14","Recevoir dossards, puces et cadeaux et les préparer par numéro"],
+["cou18","p4","cou",0,"2027-05-14","Arrêter la liste de départ et attribuer les emplacements du camp de base"],
+["vil13","p4","vil",0,"2027-04-30","Écrire le déroulé du village heure par heure sur 24 h"],
+["vil14","p4","vil",0,"2027-05-07","Organiser la buvette : stocks, caisse, paiement par carte, gobelets consignés"],
+["vil15","p4","vil",0,"2027-05-07","Préparer les lots, le trophée du vainqueur et la remise des prix"],
+["spo11","p4","spo",0,"2027-05-07","Envoyer aux partenaires le brief du jour J : montage des stands, horaires, contacts"],
+["spo12","p4","spo",0,"2027-04-30","Publier des posts croisés avec les partenaires"],
+["com17","p4","com",0,"2027-04-02","Publier le compte à rebours et des portraits de coureurs inscrits"],
+["com18","p4","com",0,"2027-05-07","Relancer la presse : invitation au départ et à la dernière boucle"],
+["com19","p4","com",0,"2027-05-14","Préparer le suivi en direct : stories, résultats live sur le site, écran au village"],
+["com20","p4","com",0,"2027-04-30","Diffuser les infos pratiques pour le public : accès, parking, horaires du village"],
+["ben07","p4","ben",0,"2027-05-07","Envoyer à chaque bénévole son créneau, sa fiche de poste et le plan du site"],
+["ben08","p4","ben",0,"2027-04-30","Préparer les tenues et les badges bénévoles"],
+["ben09","p4","ben",0,"2027-05-07","Prévoir repas et boissons des bénévoles sur 24 h"],
+["log11","p4","log",0,"2027-05-07","Confirmer toutes les locations et les horaires de livraison et de reprise"],
+["log12","p4","log",0,"2027-05-14","Préparer le stock de secours : frontales de rechange, piles, couvertures de survie, rallonges, scotch"],
+["log13","p4","log",0,"2027-05-07","Préparer la signalétique d'accès : routes, parking, village, toilettes"],
+["reg27","p5","reg",1,"2027-05-21","Suivre la météo chaque jour et activer le plan de crise si besoin"],
+["cou19","p5","cou",0,"2027-05-20","Envoyer les mails J-7 et J-2 : dernières infos, météo, horaires de retrait"],
+["par21","p5","par",1,"2027-05-21","Baliser la boucle et la parcourir entièrement après balisage"],
+["par22","p5","par",0,"2027-05-20","Tester le chrono en conditions réelles : tapis, puces, affichage live"],
+["log14","p5","log",0,"2027-05-21","Réceptionner et monter le matériel : barrières, tentes, arche, corral, éclairage"],
+["log15","p5","log",0,"2027-05-21","Tester l'électricité, l'éclairage de nuit, la sono, l'horloge et les talkies"],
+["ben10","p5","ben",0,"2027-05-20","Faire le briefing bénévoles (sur place ou en vidéo)"],
+["vil16","p5","vil",0,"2027-05-21","Installer le village et accueillir les partenaires pour leurs stands"],
+["cou20","p5","cou",0,"2027-05-21","Ouvrir le retrait des dossards (vendredi soir sur place si possible)"],
+["org16","p5","org",0,"2027-05-20","Préparer la caisse, le fond de caisse et le terminal de paiement"],
+["com21","p5","com",0,"2027-05-20","Programmer à l'avance les posts du week-end"],
+["ben11","p6","ben",0,"2027-05-22","Briefing bénévoles et prise de poste le samedi matin"],
+["cou21","p6","cou",0,"2027-05-22","Retrait des dossards et contrôle des pièces manquantes"],
+["reg28","p6","reg",1,"2027-05-22","Point d'ouverture avec les secours, le médecin et le chrono"],
+["par23","p6","par",0,"2027-05-22","Briefing coureurs avant midi : règles, nuit, abandons, sécurité"],
+["par24","p6","par",1,"2027-05-22","Premier départ à 12 h 00, puis un départ toutes les heures avec annonces à 3, 2 et 1 minute"],
+["par25","p6","par",1,"2027-05-23","Compter les coureurs à chaque départ et à chaque retour, serre-file sur chaque boucle"],
+["reg29","p6","reg",1,"2027-05-23","Faire un point sécurité toutes les 4 heures avec les secours"],
+["ben12","p6","ben",0,"2027-05-23","Assurer la relève des équipes de nuit","Le creux de fatigue arrive vers 3 h–5 h, pour les coureurs comme pour les bénévoles."],
+["vil17","p6","vil",0,"2027-05-23","Faire vivre les temps forts : coucher de soleil, boucle de minuit, lever du jour"],
+["com22","p6","com",0,"2027-05-23","Animer le live sur les réseaux et les résultats en direct"],
+["par26","p6","par",1,"2027-05-23","Dernière boucle le dimanche à 11 h 00 : départage et annonce du vainqueur"],
+["vil18","p6","vil",0,"2027-05-23","Remise des prix et photo finale"],
+["log16","p6","log",1,"2027-05-23","Débaliser la boucle le jour même et ramasser tous les déchets du parcours"],
+["log17","p6","log",0,"2027-05-23","Démonter, trier les déchets et rendre le site propre à la maison de champagne"],
+["cou22","p7","cou",0,"2027-05-24","Publier les résultats officiels (nombre de boucles par coureur)"],
+["par27","p7","par",0,"2027-05-28","Envoyer les résultats au calendrier Backyard si la course y est inscrite"],
+["com23","p7","com",0,"2027-06-04","Publier photos, aftermovie et remerciements"],
+["ben13","p7","ben",0,"2027-06-04","Remercier les bénévoles : message et moment convivial"],
+["spo13","p7","spo",0,"2027-06-11","Envoyer à chaque partenaire son bilan : chiffres, photos, retombées"],
+["cou23","p7","cou",0,"2027-05-31","Envoyer un questionnaire de satisfaction aux coureurs"],
+["org17","p7","org",0,"2027-06-25","Clôturer les comptes et faire le bilan financier"],
+["reg30","p7","reg",0,"2027-06-04","Faire le débrief sécurité avec les secours et le médecin"],
+["reg31","p7","reg",0,"2027-05-28","Remercier la mairie, les vignerons et les propriétaires, et repasser sur la boucle"],
+["org18","p7","org",0,"2027-06-30","Réunion bilan de l'équipe et décisions pour l'édition 2028"],
+["org19","p7","org",0,"2027-06-30","Archiver tous les documents pour l'an prochain : conventions, déclaration, devis, contacts"]];
+
+const PHASES = [
+  { id: "p1", n: 1, name: "Fondations", range: "oct. → déc. 2026", start: "2026-10-01", end: "2026-12-20", intro: "Poser la structure, réserver ce qui part vite (secours, chrono, médecin) et ouvrir les inscriptions sur des bases solides." },
+  { id: "p2", n: 2, name: "Structurer", range: "janv. → mi-févr. 2027", start: "2026-12-21", end: "2027-02-14", intro: "Signer les prestataires, sécuriser les autorisations de passage, monter le dossier de déclaration." },
+  { id: "p3", n: 3, name: "Dossiers officiels", range: "mi-févr. → 21 mars 2027", start: "2027-02-15", end: "2027-03-21", intro: "Déposer la déclaration dans les délais et verrouiller sécurité, village et bénévoles." },
+  { id: "p4", n: 4, name: "Préparation finale", range: "avril → 14 mai 2027", start: "2027-03-22", end: "2027-05-14", intro: "Tout confirmer, tout transmettre, tout tester une première fois." },
+  { id: "p5", n: 5, name: "Semaine de course", range: "15 → 21 mai 2027", start: "2027-05-15", end: "2027-05-21", intro: "Baliser, monter, tester, briefer." },
+  { id: "p6", n: 6, name: "Jour J", range: "sam. 22 → dim. 23 mai", start: "2027-05-22", end: "2027-05-23", intro: "24 départs, un toutes les heures, de samedi 12 h 00 à dimanche 11 h 00." },
+  { id: "p7", n: 7, name: "Après", range: "24 mai → fin juin 2027", start: "2027-05-24", end: "2027-06-30", intro: "Remercier, publier, faire les comptes et préparer 2028." },
+];
+const POLES = {
+  org: { name: "Structure & budget", code: "ORG" },
+  reg: { name: "Réglementaire & sécurité", code: "REG" },
+  par: { name: "Parcours & course", code: "PAR" },
+  cou: { name: "Coureurs & billetterie", code: "INS" },
+  vil: { name: "Village", code: "VIL" },
+  spo: { name: "Partenaires", code: "SPO" },
+  com: { name: "Communication", code: "COM" },
+  ben: { name: "Bénévoles", code: "BEN" },
+  log: { name: "Logistique", code: "LOG" },
+};
+const OWNERS = {
+  matheo:  { name: "Mathéo",     short: "M",  role: "Commercial",             scope: "Partenaires, subventions, billetterie, communication, ventes du village (food trucks, buvette, champagne)" },
+  theo:    { name: "Théo",       short: "T",  role: "Logistique & bénévoles", scope: "Matériel, montage, balisage, site, village, bénévoles" },
+  tompaul: { name: "Tom & Paul", short: "TP", role: "Organisation globale",   scope: "Structure, budget, réglementaire, sécurité, parcours et déroulé de course" },
+};
+const OWNER_BY_POLE = { spo: "matheo", cou: "matheo", com: "matheo", log: "theo", ben: "theo", vil: "theo", org: "tompaul", reg: "tompaul", par: "tompaul" };
+const OWNER_DEFAULTS = { vil02: "matheo", vil03: "matheo", vil05: "matheo", vil09: "matheo", vil14: "matheo", par21: "theo", cou13: "theo" };
+const PEOPLE = { matheo: "Mathéo", theo: "Théo", tom: "Tom", paul: "Paul" };
+const MILESTONES = [
+  { date: "2026-12-20", label: "Secours, médecin et chrono réservés", detail: "Les trois prestations qui se réservent le plus tôt pour mai.", tasks: ["reg05", "reg06", "par08"] },
+  { date: "2027-02-14", label: "Dossier de déclaration prêt, avis FFA obtenu", detail: "Règlement, plan, dispositif de secours, assurance.", tasks: ["reg15", "reg16"] },
+  { date: "2027-03-22", label: "Dernier jour pour déposer la déclaration", detail: "Au moins deux mois avant une course avec classement.", tasks: ["reg17"], legal: true },
+  { date: "2027-04-22", label: "J-30 : guide du coureur envoyé", detail: "Accès, horaires, retrait des dossards, règles.", tasks: ["cou15"] },
+  { date: "2027-05-16", label: "J-6 : attestation d'assurance transmise", detail: "Si elle n'était pas jointe au dossier de déclaration.", tasks: ["reg25"] },
+  { date: "2027-05-21", label: "Boucle balisée, site monté, chrono testé", detail: "Veille de course.", tasks: ["par21", "log14", "par22"] },
+  { date: "2027-05-22", label: "Premier départ à 12 h 00", detail: "Puis un départ toutes les heures.", tasks: ["par24"] },
+  { date: "2027-05-23", label: "Dernière boucle et vainqueur", detail: "24e départ à 11 h 00, arrivée avant 12 h 00.", tasks: ["par26"] },
+  { date: "2027-06-30", label: "Bilan financier et décision pour 2028", detail: "Comptes clos, réunion bilan de l'équipe.", tasks: ["org17", "org18"] },
+];
+const DOC_CATS = {
+  devis:    { name: "Devis",                  hint: "Devis des prestataires avant signature." },
+  facture:  { name: "Factures",               hint: "Factures reçues et justificatifs de paiement." },
+  securite: { name: "Sécurité",               hint: "Convention DPS, plan de secours, plan de crise, cartes d'accès secours." },
+  admin:    { name: "Administratif",          hint: "Statuts, déclaration de la course, récépissé, attestation d'assurance." },
+  contrat:  { name: "Conventions & contrats", hint: "Convention avec la maison de champagne, partenaires, prestataires." },
+  archive:  { name: "Archives",               hint: "Ce qu'on garde pour l'édition suivante." },
+  autre:    { name: "Autres",                 hint: "Tout le reste." },
+};
+const ACCEPT_TYPES = ["application/pdf", "image/png", "image/jpeg", "image/webp", "image/gif"];
+const DEP_STATUS = ["À chiffrer", "Devis reçu", "Engagé", "Payé"];
+const REC_STATUS = ["Prévu", "Confirmé", "Encaissé"];
+
+const RANGE0 = Date.parse("2026-10-01"), RANGE1 = Date.parse("2027-07-01");
+const MONTHS = [["2026-10-01","oct."],["2026-11-01","nov."],["2026-12-01","déc."],["2027-01-01","janv."],["2027-02-01","févr."],["2027-03-01","mars"],["2027-04-01","avr."],["2027-05-01","mai"],["2027-06-01","juin"]];
+const RACE = new Date("2027-05-22T12:00:00+02:00");
+const LS_KEY = "sacrees24h-todo-v1";
+const LS_UI = "sacrees24h-todo-ui";
+const EUR = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+
+const state = {
+  phase: "all", poles: new Set(), owners: new Set(), critOnly: false, hideDone: false, q: "", view: "list", me: "",
+  agMode: "month", agMonth: "", agDay: "",
+  checks: {}, extras: {}, assign: {}, due: {}, comments: {}, budget: {}, docs: {}, people: {}, names: {}, email: "",
+  docCat: "all", docQ: "", docTask: null, docLine: null, docPreset: null, docUsage: null,
+  mode: "pending", canWrite: true, uid: null, tasks: [], plEdit: new Set(), plPast: false,
+};
+let sb = null, session = null, channel = null, startedFor = null;
+const COLL = { checks: "checks", extra: "extras", assign: "assign", due: "due", comments: "comments", budget: "budget", docs: "docs", people: "people" };
+
+/* ── helpers ── */
+const $ = (s, r = document) => r.querySelector(s);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const ymd = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+const todayStr = () => ymd(new Date());
+const isDate = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+const dObj = s => new Date(s + "T12:00:00");
+const fmtShort = iso => { try { return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }); } catch (e) { return ""; } };
+const fmtStamp = iso => { try { const d = new Date(iso); return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) + " · " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; } };
+const fmtDay = s => { try { return dObj(s).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short", year: "numeric" }); } catch (e) { return s; } };
+const fmtDayShort = s => { try { return dObj(s).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }); } catch (e) { return s; } };
+const fmtDayLong = s => { try { const t = dObj(s).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); return t.charAt(0).toUpperCase() + t.slice(1); } catch (e) { return s; } };
+const norm = s => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const phaseOf = id => PHASES.find(p => p.id === id);
+const phaseForDate = d => { for (const p of PHASES) if (d >= p.start && d <= p.end) return p.id; return d < PHASES[0].start ? "p1" : "p7"; };
+const phColor = id => "var(--ph" + (phaseOf(id) ? phaseOf(id).n : 7) + ")";
+const pct = s => Math.max(0, Math.min(1, (Date.parse(s) - RANGE0) / (RANGE1 - RANGE0)));
+const pctEnd = s => Math.max(0, Math.min(1, (Date.parse(s) + 86400000 - RANGE0) / (RANGE1 - RANGE0)));
+const daysTo = s => Math.round((Date.parse(s) - Date.parse(todayStr())) / 86400000);
+const num = v => { if (v === "" || v == null) return null; const n = parseFloat(String(v).replace(",", ".").replace(/\s/g, "")); return isFinite(n) ? n : null; };
+const euro = n => EUR.format(Math.round(n || 0));
+const signed = n => (n > 0 ? "+" : n < 0 ? "−" : "") + EUR.format(Math.abs(Math.round(n || 0)));
+const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ── tasks ── */
+function computeTasks() {
+  const base = TASKS.map(([id, phase, pole, crit, due, label, note]) => ({ id, phase, pole, crit: !!crit, due0: due, owner0: null, label, note: note || "", extra: false }));
+  const ex = Object.entries(state.extras)
+    .filter(([, d]) => d && d.label && phaseOf(d.phase) && POLES[d.pole])
+    .sort((a, b) => String(a[1].at || "").localeCompare(String(b[1].at || "")))
+    .map(([id, d]) => ({ id, phase: d.phase, pole: d.pole, crit: false, due0: isDate(d.due) ? d.due : phaseOf(d.phase).end, owner0: OWNERS[d.owner] ? d.owner : null, label: String(d.label), note: "", extra: true }));
+  state.tasks = base.concat(ex);
+  return state.tasks;
+}
+const taskById = id => state.tasks.find(t => t.id === id);
+const isDone = id => !!(state.checks[id] && state.checks[id].done);
+function dueOf(t) { const o = state.due[t.id]; return o && isDate(o.date) ? o.date : t.due0; }
+const isLate = t => !isDone(t.id) && dueOf(t) < todayStr();
+function ownerOf(t) {
+  const a = state.assign[t.id];
+  if (a && OWNERS[a.owner]) return a.owner;
+  return t.owner0 || OWNER_DEFAULTS[t.id] || OWNER_BY_POLE[t.pole];
+}
+function whoName(who, by) {
+  if (who && PEOPLE[who]) return PEOPLE[who];
+  const p = by && state.people[by];
+  if (!p) return "";
+  if (by === state.uid) return "toi";
+  return PEOPLE[p.me] || (p.email ? p.email.split("@")[0] : "");
+}
+const byDue = (a, b) => dueOf(a).localeCompare(dueOf(b)) || (b.crit - a.crit);
+function matches(t, ignorePhase) {
+  const q = norm(state.q.trim());
+  return (ignorePhase || state.phase === "all" || t.phase === state.phase) &&
+    (!state.poles.size || state.poles.has(t.pole)) &&
+    (!state.owners.size || state.owners.has(ownerOf(t))) &&
+    (!state.critOnly || t.crit) &&
+    (!state.hideDone || !isDone(t.id)) &&
+    (!q || norm(t.label + " " + t.note + " " + POLES[t.pole].name + " " + OWNERS[ownerOf(t)].name).includes(q));
+}
+
+/* ── budget ── */
+const lineList = () => Object.entries(state.budget).filter(([, l]) => l && (l.type === "dep" || l.type === "rec")).map(([id, l]) => ({ id, ...l }));
+function planned(l) { const q = num(l.qty); const u = num(l.unit); return (q == null ? 1 : q) * (u == null ? 0 : u); }
+function realOf(l) { if (l.ticket && num(l.sold) != null) return num(l.sold) * (num(l.unit) || 0); return num(l.real); }
+const ticketLine = () => lineList().filter(l => l.type === "rec" && l.ticket).sort((a, b) => (a.order || 0) - (b.order || 0))[0] || null;
+function budgetSummary() {
+  const L = lineList();
+  const s = { depP: 0, recP: 0, depEng: 0, depPaid: 0, recConf: 0, recCash: 0, depProj: 0, recProj: 0, perPole: {}, perTask: {} };
+  Object.keys(POLES).forEach(k => { s.perPole[k] = { p: 0, e: 0 }; });
+  for (const l of L) {
+    const p = planned(l), r = realOf(l), rp = l.ticket ? Math.max(p, r || 0) : (r == null ? p : r);
+    if (l.type === "dep") {
+      s.depP += p; s.depProj += rp;
+      if (l.status === "Engagé" || l.status === "Payé") s.depEng += rp;
+      if (l.status === "Payé") s.depPaid += rp;
+      if (s.perPole[l.pole]) { s.perPole[l.pole].p += p; if (l.status === "Engagé" || l.status === "Payé") s.perPole[l.pole].e += rp; }
+    } else {
+      s.recP += p; s.recProj += rp;
+      if (l.ticket) { if (r != null) { s.recConf += r; s.recCash += r; } }
+      else {
+        if (l.status === "Confirmé" || l.status === "Encaissé") s.recConf += rp;
+        if (l.status === "Encaissé") s.recCash += rp;
+      }
+    }
+    if (l.task) { const pt = s.perTask[l.task] || (s.perTask[l.task] = { dep: 0, rec: 0 }); pt[l.type] += p; }
+  }
+  s.solde = s.recP - s.depP; s.proj = s.recProj - s.depProj; s.cash = s.recCash - s.depPaid;
+  const tk = ticketLine();
+  s.ticket = tk;
+  if (tk && num(tk.unit) > 0) {
+    const others = s.recP - planned(tk);
+    s.pm = Math.max(0, Math.ceil((s.depP - others) / num(tk.unit)));
+  } else s.pm = null;
+  return s;
+}
+
+/* ── storage ── */
+function loadLocal() {
+  try { const raw = localStorage.getItem(LS_KEY); if (raw) { const o = JSON.parse(raw); ["checks", "extras", "assign", "due", "comments", "budget", "docs"].forEach(k => { state[k] = o[k] || {}; }); } } catch (e) {}
+}
+function saveLocal() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ checks: state.checks, extras: state.extras, assign: state.assign, due: state.due, comments: state.comments, budget: state.budget, docs: state.docs })); } catch (e) {}
+}
+function loadUI() {
+  try {
+    const o = JSON.parse(localStorage.getItem(LS_UI) || "{}");
+    if (o.phase) state.phase = o.phase; state.hideDone = !!o.hideDone; state.critOnly = !!o.critOnly;
+    if (["list", "retro", "budget", "docs"].includes(o.view)) state.view = o.view;
+    if (o.me && PEOPLE[o.me]) state.me = o.me;
+    if (o.agMode === "list" || o.agMode === "month") state.agMode = o.agMode;
+    if (Array.isArray(o.owners)) o.owners.filter(k => OWNERS[k]).forEach(k => state.owners.add(k));
+  } catch (e) {}
+  const h = (location.hash || "").slice(1);
+  if (h === "retroplanning" || h === "agenda") state.view = "retro";
+  if (h === "budget") state.view = "budget";
+  if (h === "documents") state.view = "docs";
+  if (h === "taches" || h === "liste") state.view = "list";
+  state.agDay = todayStr(); state.agMonth = state.agDay.slice(0, 7);
+}
+function saveUI() {
+  try { localStorage.setItem(LS_UI, JSON.stringify({ phase: state.phase, hideDone: state.hideDone, critOnly: state.critOnly, view: state.view, me: state.me, agMode: state.agMode, owners: [...state.owners] })); } catch (e) {}
+}
+
+/* ── writes (one in flight per document, last value wins) ── */
+const desired = new Map(), inflight = new Set();
+function onWriteError(e) {
+  if (e && (e.code === "42501" || /row-level security|permission denied/i.test(e.message || ""))) { state.canWrite = false; setReadOnlySync(); render(); }
+  else setSync("warn", "Un enregistrement n'est pas passé (connexion ?). Refais la dernière action pour réessayer.");
+}
+async function flush(path) {
+  if (inflight.has(path)) return;
+  inflight.add(path);
+  while (desired.has(path)) {
+    const body = desired.get(path); desired.delete(path);
+    const [collection, id] = path.split("/");
+    try {
+      const { error } = body === null
+        ? await sb.from("items").delete().match({ collection, id })
+        : await sb.from("items").upsert({ collection, id, data: body, updated_at: new Date().toISOString(), updated_by: state.uid });
+      if (error) throw error;
+    } catch (e) { onWriteError(e); }
+  }
+  inflight.delete(path);
+}
+function write(path, body) {
+  if (state.mode === "db" && sb) { desired.set(path, body); flush(path); }
+  else saveLocal();
+}
+const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const stamp = () => ({ by: state.uid, at: new Date().toISOString() });
+function setCheck(id, done) { const b = { done, who: state.me || null, ...stamp() }; state.checks[id] = b; write("checks/" + id, b); render(); }
+function setOwner(id, owner) { const b = { owner, ...stamp() }; state.assign[id] = b; write("assign/" + id, b); render(); }
+function setDue(id, date) { if (!isDate(date)) return; const b = { date, ...stamp() }; state.due[id] = b; write("due/" + id, b); render(); }
+function addExtra({ phase, pole, label, owner, due }) {
+  const id = newId("x");
+  const b = { label: label.slice(0, 300), phase, pole, owner: OWNERS[owner] ? owner : null, due: isDate(due) ? due : phaseOf(phase).end, ...stamp() };
+  state.extras[id] = b; write("extra/" + id, b); render(); return id;
+}
+function removeExtra(id) {
+  delete state.extras[id]; delete state.checks[id]; delete state.assign[id]; delete state.due[id];
+  write("extra/" + id, null);
+  if (state.mode === "db") ["checks", "assign", "due"].forEach(c => write(c + "/" + id, null));
+  render();
+}
+function addComment(phase, text) { const id = newId("c"); const b = { phase, text: text.slice(0, 2000), who: state.me || null, ...stamp() }; state.comments[id] = b; write("comments/" + id, b); render(); }
+function removeComment(id) { delete state.comments[id]; write("comments/" + id, null); render(); }
+const canDeleteComment = c => state.canWrite && (state.mode !== "db" || (state.uid && c.by === state.uid));
+function updateLine(id, patch) {
+  const cur = state.budget[id]; if (!cur) return;
+  const b = { ...cur, ...patch, ...stamp() }; delete b.id;
+  state.budget[id] = b; write("budget/" + id, b); render();
+}
+function addLine(type, pole, extra) {
+  const id = newId("b");
+  const b = { type, pole, label: "", qty: 1, unit: 0, real: null, status: type === "dep" ? DEP_STATUS[0] : REC_STATUS[0], task: null, note: "", estimate: false, order: Date.now(), ...(extra || {}), ...stamp() };
+  state.budget[id] = b; write("budget/" + id, b); render(); return id;
+}
+function removeLine(id) { delete state.budget[id]; write("budget/" + id, null); render(); }
+
+/* ── documents ── */
+const canUpload = () => !!sb && state.canWrite && state.mode === "db";
+const docsWhere = fn => Object.entries(state.docs).filter(([, d]) => d && d.asset && fn(d));
+const signedCache = new Map(), signTried = new Map();
+const blob = d => { const s = signedCache.get(d.asset); return s && s.exp > Date.now() ? s.url : ""; };
+async function ensureThumbs() {
+  if (!sb || state.mode !== "db") return;
+  const now = Date.now();
+  const need = [...new Set(Object.values(state.docs).filter(d => d && d.asset && /^image\//.test(d.type || "") && !blob(d) && !(signTried.get(d.asset) > now - 60000)).map(d => d.asset))];
+  if (!need.length) return;
+  need.forEach(p => signTried.set(p, now));
+  try {
+    const { data, error } = await sb.storage.from("documents").createSignedUrls(need, 3600);
+    if (!error && data) { const exp = Date.now() + 55 * 60000; data.forEach(x => { if (x.signedUrl && x.path) signedCache.set(x.path, { url: x.signedUrl, exp }); }); render(); }
+  } catch (e) {}
+}
+async function openAsset(path) {
+  const w = window.open("", "_blank");
+  try {
+    const { data, error } = await sb.storage.from("documents").createSignedUrl(path, 3600);
+    if (error || !data) throw error || new Error("no url");
+    if (w) w.location.href = data.signedUrl; else location.href = data.signedUrl;
+  } catch (e) { if (w) w.close(); toast("Impossible d'ouvrir ce fichier pour le moment.", true); }
+}
+const safeName = n => n.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9._-]+/g, "-").replace(/-+/g, "-").slice(0, 120) || "fichier";
+const fmtSize = n => !n ? "" : n < 1024 * 1024 ? Math.max(1, Math.round(n / 1024)) + " Ko" : (n / 1048576).toFixed(1).replace(".", ",") + " Mo";
+let toastTimer = null;
+function toast(msg, err) {
+  const t = $("#toast"); t.textContent = msg; t.className = "toast" + (err ? " err" : ""); t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, err ? 6000 : 3500);
+}
+function uploadErr(e) {
+  const m = (e && (e.message || e.error)) || "", s = String(e && (e.statusCode || e.status) || "");
+  if (s === "413" || /too large|maximum allowed size|exceeded/i.test(m)) return "Trop lourd : 20 Mo maximum par fichier.";
+  if (/mime|type/i.test(m)) return "Format non accepté : envoie un PDF ou une image.";
+  if (s === "403" || /row-level security|unauthorized|not authorized/i.test(m)) return "Ton adresse n'a pas le droit d'ajouter des fichiers : demande à Paul de l'ajouter à l'équipe.";
+  if (/quota|storage/i.test(m)) return "L'espace de stockage est plein : supprime d'anciens fichiers.";
+  return "L'envoi n'a pas abouti. Réessaie.";
+}
+let uploads = [];
+function renderUploads() {
+  const ul = $("#up-list"); ul.textContent = "";
+  uploads.slice(-8).forEach(it => { const li = el("li"); li.append(el("b", null, it.name), el("span", it.err ? "err" : it.ok ? "ok" : null, it.msg)); ul.appendChild(li); });
+}
+async function uploadFiles(files, meta) {
+  if (!canUpload()) { toast("L'ajout de fichiers est réservé aux éditeurs de la page.", true); return; }
+  const batch = files.map(f => ({ name: f.name, msg: "En attente…" }));
+  uploads = uploads.concat(batch); renderUploads();
+  let okN = 0, lastErr = "";
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i], it = batch[i];
+    let type = f.type; if (!type && /\.pdf$/i.test(f.name)) type = "application/pdf";
+    if (type === "image/jpg") type = "image/jpeg";
+    if (!ACCEPT_TYPES.includes(type)) { it.msg = "Format non accepté : PDF ou image uniquement. Un Word ou un Excel s'exporte d'abord en PDF."; it.err = true; lastErr = it.msg; renderUploads(); continue; }
+    if (f.size > 20 * 1024 * 1024) { it.msg = "Trop lourd : 20 Mo maximum par fichier."; it.err = true; lastErr = it.msg; renderUploads(); continue; }
+    it.msg = "Envoi en cours…"; renderUploads();
+    let res = null;
+    try {
+      const key = (window.crypto && crypto.randomUUID ? crypto.randomUUID() : newId("f")) + "/" + safeName(f.name);
+      const { data, error } = await sb.storage.from("documents").upload(key, f, { contentType: type, upsert: false });
+      if (error) throw error;
+      res = { id: data.path || key, sizeBytes: f.size, contentType: type };
+    } catch (e) { it.msg = uploadErr(e); it.err = true; lastErr = it.msg; }
+    if (!res) { renderUploads(); continue; }
+    const id = newId("d");
+    const b = { name: f.name.replace(/\.[^.]+$/, "").slice(0, 200), file: f.name.slice(0, 200), cat: DOC_CATS[meta.cat] ? meta.cat : "autre", asset: res.id, size: res.sizeBytes || f.size, type: res.contentType || type, line: meta.line || null, task: meta.task || null, who: state.me || null, ...stamp() };
+    state.docs[id] = b; write("docs/" + id, b);
+    it.msg = "Ajouté"; it.ok = true; okN++; renderUploads(); render();
+  }
+  if (okN) toast(okN > 1 ? okN + " fichiers ajoutés." : "Fichier ajouté : " + batch.find(x => x.ok).name);
+  else if (lastErr) toast(lastErr, true);
+  refreshUsage();
+}
+function updateDoc(id, patch) {
+  const cur = state.docs[id]; if (!cur) return;
+  const b = { ...cur, ...patch, ...stamp() }; state.docs[id] = b; write("docs/" + id, b); render();
+}
+async function removeDoc(id) {
+  const d = state.docs[id]; if (!d) return;
+  if (!canUpload()) { toast("Supprimer un fichier est réservé aux éditeurs de la page.", true); return; }
+  try { const { error } = await sb.storage.from("documents").remove([d.asset]); if (error) throw error; }
+  catch (e) { toast("La suppression n'a pas abouti. Réessaie dans un instant.", true); return; }
+  delete state.docs[id]; write("docs/" + id, null); render(); refreshUsage(); toast("Document supprimé.");
+}
+let usageLoaded = false;
+function refreshUsage() { if (state.view === "docs") renderUsage(); }
+function renderUsage() {
+  const L = Object.values(state.docs).filter(d => d && d.asset), p = $("#doc-usage");
+  if (!L.length) { p.hidden = true; return; }
+  const bytes = L.reduce((s, d) => s + (d.size || 0), 0);
+  p.hidden = false; p.textContent = "Stockage utilisé : " + fmtSize(bytes || 1) + " (" + L.length + " fichier" + (L.length > 1 ? "s" : "") + "). L'offre gratuite de Supabase inclut 1 Go.";
+}
+function docChip(d) {
+  const a = el("a", "doc-chip", DOC_CATS[d.cat] ? DOC_CATS[d.cat].name.replace(/s$/, "") + " · " + d.name : d.name);
+  a.href = "#"; a.dataset.asset = d.asset; a.title = "Ouvrir " + (d.file || d.name);
+  return a;
+}
+function gotoDocs(opts) {
+  state.docTask = opts.task || null; state.docLine = opts.line || null; state.docCat = "all"; state.docQ = ""; $("#doc-q").value = "";
+  state.docPreset = opts.upload ? { task: opts.task || null, line: opts.line || null } : null;
+  setView("docs");
+  if (opts.upload) scrollToId("doc-drop");
+}
+
+/* ── sync status ── */
+function setSync(kind, text) { const s = $("#sync"); s.className = "sync" + (kind ? " " + kind : ""); $("#sync-text").textContent = text; }
+function setReadOnlySync() { setSync("warn", "Ton adresse (" + state.email + ") n'est pas dans la liste de l'équipe : demande à Paul de l'ajouter, puis recharge la page."); }
+
+/* ── names behind stored ids ── */
+function refreshNames() {}
+function writePeople() { if (state.mode === "db" && state.uid && state.canWrite) { const b = { email: state.email, me: state.me || null, at: new Date().toISOString() }; state.people[state.uid] = b; write("people/" + state.uid, b); } }
+
+/* ── navigation ── */
+function scrollToId(id) { const t = document.getElementById(id); if (t) t.scrollIntoView({ block: "start", behavior: reduced() ? "auto" : "smooth" }); }
+function setView(v, scrollTo) { state.view = v; saveUI(); render(); if (scrollTo) scrollToId(scrollTo); }
+function confirmDelete(btn, action) {
+  if (btn.classList.contains("confirm")) { action(); return; }
+  const label = btn.textContent; btn.classList.add("confirm"); btn.textContent = "Confirmer la suppression";
+  setTimeout(() => { if (btn.isConnected) { btn.classList.remove("confirm"); btn.textContent = label; } }, 3500);
+}
+function gotoBudget(taskId) {
+  setView("budget");
+  const rows = [...document.querySelectorAll(".bl-row")].filter(r => state.budget[r.dataset.id] && state.budget[r.dataset.id].task === taskId);
+  if (!rows.length) return;
+  rows[0].scrollIntoView({ block: "center", behavior: reduced() ? "auto" : "smooth" });
+  rows.forEach(r => { r.classList.add("flash"); setTimeout(() => r.classList.remove("flash"), 1800); });
+}
+function fillPoleSelect(sel) { Object.entries(POLES).forEach(([k, p]) => { const o = el("option", null, p.name); o.value = k; sel.appendChild(o); }); }
+function fillOwnerSelect(sel, withDefault) {
+  if (withDefault) { const o = el("option", null, "Responsable selon le pôle"); o.value = ""; sel.appendChild(o); }
+  Object.entries(OWNERS).forEach(([k, o]) => { const op = el("option", null, o.name); op.value = k; sel.appendChild(op); });
+}
+
+/* ════════ skeleton ════════ */
+function buildSkeleton() {
+  const strip = $("#strip"); for (let i = 0; i < 24; i++) strip.appendChild(el("i"));
+
+  // organizers
+  const og = $("#org-grid");
+  Object.entries(OWNERS).forEach(([k, o]) => {
+    const b = el("button", "org-card"); b.type = "button"; b.dataset.owner = k;
+    const top = el("div", "org-top"); top.append(el("span", "org-name", o.name)); const f = el("span", "org-filter"); f.dataset.role = "flt"; top.append(f);
+    const bar = el("div", "org-bar"); const fill = el("span"); fill.dataset.role = "fill"; bar.appendChild(fill);
+    const stats = el("div", "org-stats"); stats.dataset.role = "stats";
+    const next = el("div", "org-next"); next.dataset.role = "next";
+    b.append(top, el("span", "org-role", o.role), el("span", "org-scope", o.scope), bar, stats, next);
+    og.appendChild(b);
+  });
+  og.addEventListener("click", e => {
+    const b = e.target.closest("[data-owner]"); if (!b) return;
+    const k = b.dataset.owner; state.owners.has(k) ? state.owners.delete(k) : state.owners.add(k);
+    if (state.view === "budget") state.view = "list";
+    saveUI(); render();
+  });
+  const me = $("#me"); me.value = state.me;
+  me.addEventListener("change", () => { state.me = PEOPLE[me.value] ? me.value : ""; saveUI(); writePeople(); render(); });
+  document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => setView(t.dataset.view)));
+
+  buildListView();
+  buildPlanning();
+  buildBudget();
+  buildDocs();
+
+  // shared delegation for task rows wherever they appear
+  document.addEventListener("change", e => {
+    const t = e.target;
+    if (t.matches('input[type="checkbox"][data-id]')) { if (!state.canWrite) { t.checked = !t.checked; return; } setCheck(t.dataset.id, t.checked); }
+    else if (t.matches("select[data-owner-for]")) { if (state.canWrite && OWNERS[t.value]) setOwner(t.dataset.ownerFor, t.value); }
+    else if (t.matches("input[data-due-for]")) { if (state.canWrite && isDate(t.value)) setDue(t.dataset.dueFor, t.value); }
+  });
+  document.addEventListener("click", e => {
+    const t = e.target;
+    const d = t.closest(".del[data-id]"); if (d) { confirmDelete(d, () => removeExtra(d.dataset.id)); return; }
+    const c = t.closest(".del[data-comment]"); if (c) { confirmDelete(c, () => removeComment(c.dataset.comment)); return; }
+    const g = t.closest("[data-goto-budget]"); if (g) { gotoBudget(g.dataset.gotoBudget); return; }
+    const gd = t.closest("[data-goto-docs]"); if (gd) { gotoDocs({ task: gd.dataset.gotoDocs, upload: !!gd.dataset.upload }); return; }
+    const oa = t.closest("a[data-asset]"); if (oa) { e.preventDefault(); openAsset(oa.dataset.asset); return; }
+  });
+}
+
+function buildListView() {
+  const pc = $("#phase-chips");
+  const all = el("button", "chip"); all.type = "button"; all.dataset.phase = "all"; all.append("Tout le plan"); pc.appendChild(all);
+  PHASES.forEach(p => {
+    const b = el("button", "chip"); b.type = "button"; b.dataset.phase = p.id; b.style.setProperty("--phc", phColor(p.id));
+    b.append(el("span", "swatch"), p.n + " · " + p.name, el("span", "n")); pc.appendChild(b);
+  });
+  pc.addEventListener("click", e => {
+    const b = e.target.closest("[data-phase]"); if (!b) return;
+    state.phase = b.dataset.phase; saveUI(); render(); if (state.phase !== "all") scrollToId(state.phase);
+  });
+  const plc = $("#pole-chips");
+  Object.entries(POLES).forEach(([k, p]) => { const b = el("button", "chip"); b.type = "button"; b.dataset.pole = k; b.append(p.name, el("span", "n")); plc.appendChild(b); });
+  plc.addEventListener("click", e => { const b = e.target.closest("[data-pole]"); if (!b) return; const k = b.dataset.pole; state.poles.has(k) ? state.poles.delete(k) : state.poles.add(k); render(); });
+  $("#q").addEventListener("input", e => { state.q = e.target.value; render(); });
+  $("#crit-only").addEventListener("change", e => { state.critOnly = e.target.checked; saveUI(); render(); });
+  $("#hide-done").addEventListener("change", e => { state.hideDone = e.target.checked; saveUI(); render(); });
+  $("#reset").addEventListener("click", () => { state.phase = "all"; state.poles.clear(); state.owners.clear(); state.critOnly = false; state.hideDone = false; state.q = ""; $("#q").value = ""; saveUI(); render(); });
+
+  const main = $("#phases");
+  PHASES.forEach(p => {
+    const sec = el("section", "phase"); sec.id = p.id; sec.style.setProperty("--phc", phColor(p.id));
+    const head = el("header", "phase-head");
+    const top = el("div", "ph-top");
+    const st = el("span", "ph-status"); st.dataset.role = "status";
+    const cc = el("span", "ph-cc"); cc.dataset.role = "ccount";
+    const num_ = el("span", "ph-num"); num_.append(el("span", "swatch"), "Phase " + p.n);
+    top.append(num_, el("span", "ph-range", p.range), st, cc);
+    const count = el("div", "ph-count"); const b = el("b"); b.dataset.role = "count";
+    const bar = el("div", "ph-bar"); const fill = el("span"); fill.dataset.role = "fill"; bar.appendChild(fill); count.append(b, bar);
+    head.append(top, el("h2", null, p.name), count);
+    const ul = el("ul", "tasks"); ul.dataset.role = "list";
+
+    const form = el("form", "add"); form.dataset.role = "addform";
+    const inp = el("input"); inp.type = "text"; inp.id = "add-" + p.id; inp.placeholder = "Ajouter une tâche à la phase " + p.n; inp.setAttribute("aria-label", "Nouvelle tâche, phase " + p.n); inp.maxLength = 300;
+    const sel = el("select", "field"); sel.id = "addpole-" + p.id; sel.setAttribute("aria-label", "Pôle"); fillPoleSelect(sel);
+    const ow = el("select", "field"); ow.id = "addowner-" + p.id; ow.setAttribute("aria-label", "Responsable"); fillOwnerSelect(ow, true);
+    const dl = el("label", "lbl"); dl.htmlFor = "adddue-" + p.id; dl.append("Date limite");
+    const du = el("input", "field"); du.type = "date"; du.id = "adddue-" + p.id; du.value = p.end; dl.appendChild(du);
+    const btn = el("button", "btn", "Ajouter"); btn.type = "submit";
+    form.append(inp, sel, ow, dl, btn);
+    form.addEventListener("submit", e => {
+      e.preventDefault(); const v = inp.value.trim(); if (!v || !state.canWrite) return;
+      addExtra({ phase: p.id, pole: sel.value, label: v, owner: ow.value, due: du.value }); inp.value = "";
+    });
+
+    const box = el("div", "comments");
+    box.append(el("p", "eyebrow", "Commentaires · phase " + p.n));
+    const cl = el("ul", "c-list"); cl.dataset.role = "comments"; box.appendChild(cl);
+    const cf = el("form", "c-form"); cf.dataset.role = "cform";
+    const ta = el("textarea"); ta.id = "comment-" + p.id; ta.rows = 2; ta.maxLength = 2000; ta.placeholder = "Une info, une décision, une question sur cette phase…"; ta.setAttribute("aria-label", "Nouveau commentaire, phase " + p.n);
+    const act = el("div", "c-actions"); const as = el("span"); as.dataset.role = "as"; const pub = el("button", "btn", "Publier"); pub.type = "submit"; act.append(as, pub); cf.append(ta, act);
+    cf.addEventListener("submit", e => { e.preventDefault(); const v = ta.value.trim(); if (!v || !state.canWrite) return; addComment(p.id, v); ta.value = ""; });
+    ta.addEventListener("keydown", e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); cf.requestSubmit(); } });
+    box.appendChild(cf);
+    sec.append(head, el("p", "ph-intro", p.intro), ul, form, box);
+    main.appendChild(sec);
+  });
+
+}
+
+function buildPlanning() {
+  const steps = $("#steps");
+  PHASES.forEach(p => {
+    const li = el("li", "step"); li.style.setProperty("--phc", phColor(p.id));
+    const b = el("button"); b.type = "button"; b.dataset.step = p.id;
+    const bar = el("span", "st-bar"); const f = el("i"); f.dataset.role = "fill"; bar.appendChild(f);
+    const c = el("span", "st-c"); c.dataset.role = "count";
+    const tag = el("span", "st-tag"); tag.dataset.role = "tag";
+    b.append(el("span", "st-n", "Étape " + p.n), el("span", "st-nm", p.name), el("span", "st-dt", p.range), bar, c, tag);
+    li.appendChild(b); steps.appendChild(li);
+  });
+  steps.addEventListener("click", e => {
+    const b = e.target.closest("[data-step]"); if (!b) return;
+    const id = b.dataset.step;
+    if (phaseOf(id).end < weekStart(todayStr()) && !state.plPast) { state.plPast = true; render(); }
+    scrollToId("pl-" + id);
+  });
+  const seg = $("#pl-owner-seg");
+  [["all", "Tout le monde"]].concat(Object.entries(OWNERS).map(([k, o]) => [k, o.name])).forEach(([k, n]) => { const b = el("button", null, n); b.type = "button"; b.dataset.plowner = k; seg.appendChild(b); });
+  seg.addEventListener("click", e => { const b = e.target.closest("[data-plowner]"); if (!b) return; state.owners = b.dataset.plowner === "all" ? new Set() : new Set([b.dataset.plowner]); saveUI(); render(); });
+  $("#pl-hide-done").addEventListener("change", e => { state.hideDone = e.target.checked; saveUI(); render(); });
+  $("#pl-past").addEventListener("click", () => { state.plPast = !state.plPast; render(); });
+
+  const form = $("#pl-form"), tog = $("#pl-add-toggle"), dateIn = $("#pl-date");
+  fillOwnerSelect($("#pl-owner"), false); fillPoleSelect($("#pl-pole"));
+  const hint = () => { const d = dateIn.value; const p = isDate(d) ? phaseOf(phaseForDate(d)) : null; $("#pl-phase-hint").textContent = p ? "Elle ira dans l'étape " + p.n + " · " + p.name + "." : ""; };
+  dateIn.addEventListener("input", hint);
+  const openForm = open => {
+    form.hidden = !open; tog.setAttribute("aria-expanded", String(open)); tog.textContent = open ? "Fermer" : "+ Ajouter une tâche";
+    if (open) {
+      if (!dateIn.value) { const x = new Date(); x.setDate(x.getDate() + 7); dateIn.value = ymd(x); }
+      if (state.me) $("#pl-owner").value = state.me === "matheo" ? "matheo" : state.me === "theo" ? "theo" : "tompaul";
+      hint(); $("#pl-label").focus();
+    }
+  };
+  tog.addEventListener("click", () => openForm(form.hidden));
+  $("#pl-cancel").addEventListener("click", () => openForm(false));
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    const label = $("#pl-label").value.trim(), due = dateIn.value, owner = $("#pl-owner").value;
+    if (!label || !isDate(due) || !state.canWrite) return;
+    if (state.owners.size && !state.owners.has(owner)) state.owners.clear();
+    if (state.hideDone) state.hideDone = false;
+    const id = addExtra({ phase: phaseForDate(due), pole: $("#pl-pole").value, label, owner, due });
+    $("#pl-label").value = ""; openForm(false);
+    requestAnimationFrame(() => {
+      const cb = document.getElementById("cb-pl-" + id); const row = cb && cb.closest(".pr");
+      if (row) { row.scrollIntoView({ block: "center", behavior: reduced() ? "auto" : "smooth" }); row.classList.add("flash"); setTimeout(() => row.classList.remove("flash"), 1800); }
+    });
+  });
+  document.addEventListener("click", e => {
+    const b = e.target.closest(".pr-edit[data-edit]"); if (!b) return;
+    const id = b.dataset.edit; state.plEdit.has(id) ? state.plEdit.delete(id) : state.plEdit.add(id); render();
+  });
+}
+
+let budgetBuilt = false;
+function buildDocs() {
+  const cat = $("#up-cat");
+  Object.entries(DOC_CATS).forEach(([k, c]) => { const o = el("option", null, c.name); o.value = k; cat.appendChild(o); });
+  const input = $("#up-input"), drop = $("#doc-drop");
+  const meta = () => ({ cat: cat.value, task: $("#up-task").value || null, line: $("#up-line").value || null });
+  $("#up-pick").addEventListener("click", () => input.click());
+  input.addEventListener("change", () => { const files = [...input.files]; input.value = ""; if (files.length) uploadFiles(files, meta()); });
+  ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); if (canUpload()) drop.classList.add("over"); }));
+  ["dragleave", "dragend"].forEach(ev => drop.addEventListener(ev, e => { if (!drop.contains(e.relatedTarget)) drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("over"); const files = [...(e.dataTransfer ? e.dataTransfer.files : [])]; if (files.length) uploadFiles(files, meta()); });
+  const chips = $("#doc-cats");
+  [["all", "Tous"]].concat(Object.entries(DOC_CATS).map(([k, c]) => [k, c.name])).forEach(([k, n]) => { const b = el("button", "chip"); b.type = "button"; b.dataset.doccat = k; b.append(n, el("span", "n")); chips.appendChild(b); });
+  chips.addEventListener("click", e => { const b = e.target.closest("[data-doccat]"); if (!b) return; state.docCat = b.dataset.doccat; render(); });
+  $("#doc-q").addEventListener("input", e => { state.docQ = e.target.value; render(); });
+  $("#doc-clear").addEventListener("click", () => { state.docTask = null; state.docLine = null; render(); });
+}
+function buildBudget() {
+  ["dep", "rec"].forEach(type => {
+    const sel = $("#" + type + "-add-pole"); fillPoleSelect(sel);
+    sel.value = type === "rec" ? "spo" : "log";
+    $("#" + type + "-add").addEventListener("click", () => { if (!state.canWrite) return; const id = addLine(type, sel.value); focusLine(id); });
+  });
+  const tkSet = (field, v) => { const tk = ticketLine(); if (!tk || !state.canWrite) return; const n = num(v); updateLine(tk.id, { [field]: n, estimate: false }); };
+  $("#tk-price").addEventListener("change", e => tkSet("unit", e.target.value));
+  $("#tk-qty").addEventListener("change", e => tkSet("qty", e.target.value));
+  $("#tk-sold").addEventListener("change", e => tkSet("sold", e.target.value));
+  $("#tk-create").addEventListener("click", () => { if (!state.canWrite) return; addLine("rec", "cou", { label: "Inscriptions (dossards)", qty: 150, unit: 70, ticket: true, sold: null, status: "Prévu" }); });
+  budgetBuilt = true;
+}
+function focusLine(id) { requestAnimationFrame(() => { const r = rowMap.get(id); if (r) { r._f.label.focus(); r.scrollIntoView({ block: "center", behavior: reduced() ? "auto" : "smooth" }); } }); }
+
+/* ════════ task row ════════ */
+function taskRow(t, ctx, opts = {}) {
+  const done = isDone(t.id), late = isLate(t), due = dueOf(t);
+  const li = el("li", "task" + (done ? " done" : "") + (late ? " late" : "") + (opts.date ? " with-date" : ""));
+  li.style.setProperty("--phc", phColor(t.phase));
+  if (opts.date) { const dd = el("div", "t-date"); const o = dObj(due); dd.append(el("small", null, o.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "")), el("b", null, String(o.getDate()))); li.appendChild(dd); }
+  const cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + ctx + "-" + t.id; cb.dataset.id = t.id; cb.checked = done; cb.disabled = !state.canWrite;
+  const body = el("div", "t-body");
+  const lab = el("label", "t-label", t.label); lab.htmlFor = cb.id; body.appendChild(lab);
+  if (t.note) body.appendChild(el("div", "t-note", t.note));
+  const meta = el("div", "t-meta");
+  const ow = ownerOf(t);
+  if (state.canWrite) {
+    const s = el("select", "mini"); s.dataset.ownerFor = t.id; s.setAttribute("aria-label", "Responsable");
+    Object.entries(OWNERS).forEach(([k, o]) => { const op = el("option", null, o.name); op.value = k; if (k === ow) op.selected = true; s.appendChild(op); });
+    meta.appendChild(s);
+    const di = el("input", "mini"); di.type = "date"; di.value = due; di.dataset.dueFor = t.id; di.setAttribute("aria-label", "Date limite"); di.title = "Date limite";
+    meta.appendChild(di);
+  } else { meta.append(el("span", "owner-txt", OWNERS[ow].name), el("span", "due-txt", "Échéance " + fmtDayShort(due))); }
+  meta.appendChild(el("span", "code", t.extra ? POLES[t.pole].code + "-+" : POLES[t.pole].code + "-" + t.id.slice(-2)));
+  if (opts.phase) { const tp = el("span", "tag-ph"); tp.append(el("span", "swatch"), "Phase " + phaseOf(t.phase).n); meta.appendChild(tp); }
+  meta.appendChild(el("span", null, POLES[t.pole].name));
+  if (t.crit) meta.appendChild(el("span", "tag-crit", "Critique"));
+  if (late) meta.appendChild(el("span", "tag-late", "En retard"));
+  const bt = opts.budget && opts.budget[t.id];
+  if (bt) { const bc = el("button", "bud-chip", bt.dep ? "Budget " + euro(bt.dep) : "Recette " + euro(bt.rec)); bc.type = "button"; bc.dataset.gotoBudget = t.id; bc.title = "Voir la ligne de budget"; meta.appendChild(bc); }
+  const dn = docsWhere(d => d.task === t.id).length;
+  if (dn) { const db_ = el("button", "doc-btn", dn + " document" + (dn > 1 ? "s" : "")); db_.type = "button"; db_.dataset.gotoDocs = t.id; db_.title = "Voir les documents de cette tâche"; meta.appendChild(db_); }
+  const c = state.checks[t.id];
+  if (c && c.done) meta.appendChild(el("span", "by", "✓ " + [whoName(c.who, c.by), c.at ? fmtShort(c.at) : ""].filter(Boolean).join(" · ")));
+  if (t.extra) { meta.appendChild(el("span", null, "Ajoutée par l'équipe")); if (state.canWrite) { const d = el("button", "del", "Supprimer"); d.type = "button"; d.dataset.id = t.id; meta.appendChild(d); } }
+  body.appendChild(meta);
+  li.append(cb, body);
+  return li;
+}
+function commentItem(id, c) {
+  const li = el("li", "c-item" + (state.uid && c.by === state.uid ? " mine" : ""));
+  const h = el("div", "c-head");
+  h.append(el("span", "c-author", whoName(c.who, c.by) || "Quelqu'un"), el("span", "c-date", c.at ? fmtStamp(c.at) : ""));
+  if (canDeleteComment(c)) { const d = el("button", "del", "Supprimer"); d.type = "button"; d.dataset.comment = id; h.appendChild(d); }
+  li.append(h, el("p", "c-text", String(c.text || "")));
+  return li;
+}
+
+/* ════════ renderers ════════ */
+function renderList(tasks, today, bs) {
+  $("#phase-chips").querySelectorAll("[data-phase]").forEach(b => {
+    const id = b.dataset.phase; b.setAttribute("aria-pressed", String(state.phase === id)); if (id === "all") return;
+    const pt = tasks.filter(t => t.phase === id); b.querySelector(".n").textContent = pt.filter(t => isDone(t.id)).length + "/" + pt.length;
+  });
+  $("#pole-chips").querySelectorAll("[data-pole]").forEach(b => {
+    const k = b.dataset.pole; const pt = tasks.filter(t => t.pole === k);
+    b.setAttribute("aria-pressed", String(state.poles.has(k))); b.querySelector(".n").textContent = pt.filter(t => isDone(t.id)).length + "/" + pt.length;
+  });
+  $("#crit-only").checked = state.critOnly; $("#hide-done").checked = state.hideDone;
+  $("#reset").hidden = !(state.phase !== "all" || state.poles.size || state.owners.size || state.critOnly || state.hideDone || state.q.trim());
+  const asText = state.me ? "Publié en tant que " + PEOPLE[state.me] : "Choisis « Je suis » dans Organisateurs pour signer tes commentaires";
+  const comments = Object.entries(state.comments).filter(([, c]) => c && c.text).sort((a, b) => String(a[1].at || "").localeCompare(String(b[1].at || "")));
+  PHASES.forEach(p => {
+    const sec = document.getElementById(p.id);
+    sec.hidden = state.phase !== "all" && state.phase !== p.id;
+    const pt = tasks.filter(t => t.phase === p.id); const pd = pt.filter(t => isDone(t.id)).length;
+    sec.querySelector('[data-role="count"]').textContent = pd + " / " + pt.length;
+    sec.querySelector('[data-role="fill"]').style.width = (pt.length ? pd / pt.length * 100 : 0) + "%";
+    const st = sec.querySelector('[data-role="status"]'); let cls = "", txt = "À venir";
+    if (pt.length && pd === pt.length) { cls = "done"; txt = "Bouclée"; } else if (today > p.end) { cls = "late"; txt = "Échéance passée"; } else if (today >= p.start) { cls = "now"; txt = "En cours"; }
+    st.className = "ph-status" + (cls ? " " + cls : ""); st.textContent = txt;
+    const shown = pt.filter(t => matches(t, true)).sort(byDue);
+    const ul = sec.querySelector('[data-role="list"]'); ul.textContent = "";
+    if (!shown.length) ul.appendChild(el("li", "empty", "Aucune tâche avec ces filtres."));
+    else shown.forEach(t => ul.appendChild(taskRow(t, "l", { budget: bs.perTask })));
+    sec.querySelector('[data-role="addform"]').hidden = !state.canWrite;
+    const pc = comments.filter(([, c]) => c.phase === p.id);
+    sec.querySelector('[data-role="ccount"]').textContent = pc.length ? pc.length + " commentaire" + (pc.length > 1 ? "s" : "") : "";
+    const cl = sec.querySelector('[data-role="comments"]'); cl.textContent = "";
+    if (!pc.length) cl.appendChild(el("li", "c-empty", "Pas encore de commentaire sur cette phase.")); else pc.forEach(([id, c]) => cl.appendChild(commentItem(id, c)));
+    sec.querySelector('[data-role="cform"]').hidden = !state.canWrite;
+    sec.querySelector('[data-role="as"]').textContent = asText;
+  });
+}
+
+function msStatus(m) {
+  if (m.tasks.every(isDone)) return { cls: "done", text: "Fait" };
+  const d = daysTo(m.date);
+  if (d < 0) return { cls: "late", text: "En retard" };
+  if (d === 0) return { cls: "", text: "Aujourd'hui" };
+  return { cls: "", text: "J-" + d };
+}
+function weekStart(ds) { const d = dObj(ds); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return ymd(d); }
+function isoWeek(ds) { const d = dObj(ds); const u = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const wd = u.getUTCDay() || 7; u.setUTCDate(u.getUTCDate() + 4 - wd); const y0 = new Date(Date.UTC(u.getUTCFullYear(), 0, 1)); return Math.ceil(((u - y0) / 86400000 + 1) / 7); }
+function weekRange(ws) {
+  const a = dObj(ws), b = dObj(ws); b.setDate(b.getDate() + 6);
+  const m = x => x.toLocaleDateString("fr-FR", { month: "short" });
+  return "du " + a.getDate() + (a.getMonth() !== b.getMonth() ? " " + m(a) : "") + (a.getFullYear() !== b.getFullYear() ? " " + a.getFullYear() : "") + " au " + b.getDate() + " " + m(b) + " " + b.getFullYear();
+}
+function planRow(t, bs) {
+  const done = isDone(t.id), late = isLate(t), due = dueOf(t), ow = ownerOf(t);
+  const li = el("li", "pr" + (done ? " done" : "") + (late ? " late" : ""));
+  const cb = el("input"); cb.type = "checkbox"; cb.id = "cb-pl-" + t.id; cb.dataset.id = t.id; cb.checked = done; cb.disabled = !state.canWrite;
+  cb.setAttribute("aria-label", "Marquer comme faite : " + t.label);
+  const main = el("div", "pr-main");
+  const lab = el("label", "pr-label", t.label); lab.htmlFor = cb.id; main.appendChild(lab);
+  const sub = el("div", "pr-sub");
+  sub.appendChild(el("span", "m-only", OWNERS[ow].name + " · " + fmtDayShort(due)));
+  if (t.crit) sub.appendChild(el("span", "tag-crit", "Critique"));
+  sub.appendChild(el("span", null, POLES[t.pole].name));
+  const pdn = docsWhere(d => d.task === t.id).length;
+  if (pdn) { const b = el("button", "doc-btn", pdn + " document" + (pdn > 1 ? "s" : "")); b.type = "button"; b.dataset.gotoDocs = t.id; sub.appendChild(b); }
+  const c = state.checks[t.id];
+  if (c && c.done) sub.appendChild(el("span", "by", "✓ " + [whoName(c.who, c.by), c.at ? fmtShort(c.at) : ""].filter(Boolean).join(" · ")));
+  main.appendChild(sub);
+  li.append(cb, main, el("span", "pr-who", OWNERS[ow].name), el("span", "pr-date", fmtDayShort(due)));
+  if (state.canWrite) {
+    const open = state.plEdit.has(t.id);
+    const eb = el("button", "pr-edit", open ? "Fermer" : "Modifier"); eb.type = "button"; eb.dataset.edit = t.id; eb.setAttribute("aria-expanded", String(open));
+    li.appendChild(eb);
+    if (open) {
+      const ed = el("div", "pr-editor");
+      const l1 = el("label"); l1.append("Qui ");
+      const s = el("select", "mini"); s.dataset.ownerFor = t.id;
+      Object.entries(OWNERS).forEach(([k, o]) => { const op = el("option", null, o.name); op.value = k; if (k === ow) op.selected = true; s.appendChild(op); });
+      l1.appendChild(s);
+      const l2 = el("label"); l2.append("Pour quand ");
+      const di = el("input", "mini"); di.type = "date"; di.value = due; di.dataset.dueFor = t.id; l2.appendChild(di);
+      ed.append(l1, l2);
+      const bt = bs.perTask[t.id];
+      if (bt) { const bc = el("button", "bud-chip", bt.dep ? "Budget " + euro(bt.dep) : "Recette " + euro(bt.rec)); bc.type = "button"; bc.dataset.gotoBudget = t.id; ed.appendChild(bc); }
+      const dn = docsWhere(d => d.task === t.id).length;
+      const dbt = el("button", "doc-btn", dn ? "Documents (" + dn + ")" : "+ Ajouter un document"); dbt.type = "button"; dbt.dataset.gotoDocs = t.id; if (!dn) dbt.dataset.upload = "1"; ed.appendChild(dbt);
+      if (t.extra) { const d = el("button", "del", "Supprimer la tâche"); d.type = "button"; d.dataset.id = t.id; ed.appendChild(d); }
+      li.appendChild(ed);
+    }
+  }
+  return li;
+}
+function renderPlanning(tasks, today, bs) {
+  const ws0 = weekStart(today);
+  $("#steps").querySelectorAll("[data-step]").forEach(b => {
+    const p = phaseOf(b.dataset.step); const pt = tasks.filter(t => t.phase === p.id); const pd = pt.filter(t => isDone(t.id)).length;
+    const now = today >= p.start && today <= p.end, past = today > p.end, full = pt.length > 0 && pd === pt.length;
+    b.parentNode.classList.toggle("now", now); b.parentNode.classList.toggle("past", past && full);
+    b.querySelector('[data-role="fill"]').style.width = (pt.length ? pd / pt.length * 100 : 0) + "%";
+    b.querySelector('[data-role="count"]').textContent = pd + " / " + pt.length + " faites";
+    const tag = b.querySelector('[data-role="tag"]');
+    tag.textContent = full ? "Terminée" : now ? "En cours" : past ? "En retard" : "";
+    tag.className = "st-tag" + (full ? " done" : now ? " now" : past ? " late" : ""); tag.hidden = !tag.textContent;
+  });
+  const ownKey = state.owners.size === 0 ? "all" : state.owners.size === 1 ? [...state.owners][0] : "";
+  document.querySelectorAll("[data-plowner]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.plowner === ownKey)));
+  $("#pl-hide-done").checked = state.hideDone;
+  $("#pl-add-toggle").hidden = !state.canWrite;
+  if (!state.canWrite) $("#pl-form").hidden = true;
+
+  const shown = tasks.filter(t => (!state.owners.size || state.owners.has(ownerOf(t))) && (!state.hideDone || !isDone(t.id)));
+  const late = shown.filter(isLate).sort(byDue);
+  const pastCount = shown.filter(t => !isLate(t) && dueOf(t) < ws0).length;
+  const pb = $("#pl-past"); pb.hidden = !pastCount;
+  pb.textContent = state.plPast ? "Masquer les semaines passées" : "Voir les semaines passées (" + pastCount + " tâche" + (pastCount > 1 ? "s" : "") + ")";
+
+  const host = $("#planning"); host.textContent = "";
+  if (late.length) {
+    const w = el("section", "week late-block");
+    const h = el("div", "week-h"); h.append(el("span", "rel", "En retard"), el("span", "cnt", late.length + " tâche" + (late.length > 1 ? "s" : "") + " à rattraper"));
+    const ul = el("ul", "prs"); late.forEach(t => ul.appendChild(planRow(t, bs)));
+    w.append(h, ul); host.appendChild(w);
+  }
+  const groups = {};
+  const put = (ph, ws) => { const g = groups[ph] || (groups[ph] = {}); return g[ws] || (g[ws] = { tasks: [], ms: [] }); };
+  shown.filter(t => !isLate(t) && (state.plPast || dueOf(t) >= ws0)).forEach(t => { const d = dueOf(t); put(phaseForDate(d), weekStart(d)).tasks.push(t); });
+  MILESTONES.forEach((m, i) => { if (state.plPast || m.date >= ws0) put(phaseForDate(m.date), weekStart(m.date)).ms.push({ m, i }); });
+
+  PHASES.forEach(p => {
+    const sec = el("section", "pl-phase"); sec.id = "pl-" + p.id; sec.style.setProperty("--phc", phColor(p.id));
+    const h = el("div", "pl-phase-h");
+    h.append(el("span", "pl-ph-n", "Étape " + p.n + " · " + p.range), el("h3", null, p.name), el("p", "pl-ph-intro", p.intro));
+    sec.appendChild(h);
+    const weeks = groups[p.id] ? Object.keys(groups[p.id]).sort() : [];
+    if (!weeks.length) sec.appendChild(el("p", "pl-empty", today > p.end ? "Étape passée." : "Rien à afficher pour cette étape avec ces filtres."));
+    weeks.forEach(ws => {
+      const g = groups[p.id][ws];
+      const diff = Math.round((Date.parse(ws) - Date.parse(ws0)) / 604800000);
+      const rel = diff === 0 ? "Cette semaine" : diff === 1 ? "Semaine prochaine" : diff > 1 ? "Dans " + diff + " semaines" : diff === -1 ? "Semaine dernière" : "Il y a " + (-diff) + " semaines";
+      const w = el("section", "week" + (diff === 0 ? " now" : "") + (diff < 0 ? " past" : ""));
+      const hh = el("div", "week-h"); const left = el("div", "wk-l");
+      left.append(el("span", "rel", rel), el("span", "dates", weekRange(ws) + " · semaine " + isoWeek(ws)));
+      const nd = g.tasks.filter(t => isDone(t.id)).length;
+      hh.append(left, el("span", "cnt", g.tasks.length ? g.tasks.length + " tâche" + (g.tasks.length > 1 ? "s" : "") + (nd ? " · " + nd + " faite" + (nd > 1 ? "s" : "") : "") : ""));
+      w.appendChild(hh);
+      const ul = el("ul", "prs");
+      g.ms.forEach(({ m, i }) => {
+        const st = msStatus(m);
+        const li = el("li", "ms-row" + (m.legal ? " legal" : ""));
+        const d = el("span", "dia " + st.cls + (m.legal ? " legal" : "")); d.appendChild(el("b", null, "!"));
+        const txt = el("span", "ms-txt"); txt.append(el("b", null, (m.legal ? "Échéance légale : " : "Étape clé : ") + m.label), el("small", null, fmtDayShort(m.date) + " · " + m.detail));
+        li.append(d, txt, el("span", "ms-st " + st.cls, st.text)); ul.appendChild(li);
+      });
+      g.tasks.slice().sort((a, b) => dueOf(a).localeCompare(dueOf(b)) || (isDone(a.id) - isDone(b.id)) || (b.crit - a.crit)).forEach(t => ul.appendChild(planRow(t, bs)));
+      w.appendChild(ul); sec.appendChild(w);
+    });
+    host.appendChild(sec);
+  });
+}
+
+/* ── budget rendering: rows are patched in place so typing is never interrupted ── */
+const rowMap = new Map(), groupMap = new Map();
+let taskOptSig = "", taskOptHTML = "";
+function taskOptions(tasks) {
+  const sig = tasks.map(t => t.id + ":" + t.label.length).join("|");
+  if (sig !== taskOptSig) {
+    taskOptSig = sig;
+    let h = '<option value="">Aucune tâche liée</option>';
+    Object.entries(POLES).forEach(([k, p]) => {
+      const pt = tasks.filter(t => t.pole === k); if (!pt.length) return;
+      h += '<optgroup label="' + esc(p.name) + '">' + pt.map(t => '<option value="' + esc(t.id) + '">' + esc((t.extra ? p.code + "-+" : p.code + "-" + t.id.slice(-2)) + " · " + (t.label.length > 70 ? t.label.slice(0, 68) + "…" : t.label)) + '</option>').join("") + '</optgroup>';
+    });
+    taskOptHTML = h;
+    rowMap.forEach(r => { if (document.activeElement !== r._f.task) { const v = r._f.task.value; r._f.task.innerHTML = taskOptHTML; r._f.task.value = v; } });
+  }
+  return taskOptHTML;
+}
+function fld(cap, control) { const l = el("label", "fld"); l.append(el("span", "cap", cap), control); return l; }
+function makeRow(id, l, tasks) {
+  const r = el("div", "bl-row"); r.dataset.id = id;
+  const f = {};
+  f.label = el("input", "lbl-in"); f.label.type = "text"; f.label.maxLength = 200; f.label.placeholder = l.type === "dep" ? "Nouvelle dépense" : "Nouvelle recette";
+  f.pole = el("select"); fillPoleSelect(f.pole);
+  f.qty = el("input"); f.qty.type = "number"; f.qty.min = "0"; f.qty.step = "any"; f.qty.inputMode = "decimal";
+  f.unit = el("input"); f.unit.type = "number"; f.unit.step = "any"; f.unit.inputMode = "decimal";
+  f.planned = el("output", "planned");
+  f.real = el("input"); f.real.type = "number"; f.real.step = "any"; f.real.inputMode = "decimal"; f.real.placeholder = "—";
+  f.realOut = el("output", "real-out"); f.realOut.title = "Dossards vendus × prix moyen";
+  f.status = el("select"); (l.type === "dep" ? DEP_STATUS : REC_STATUS).forEach(s => { const o = el("option", null, s); o.value = s; f.status.appendChild(o); });
+  f.task = el("select"); f.task.innerHTML = taskOptions(tasks);
+  f.hint = el("span", "hint");
+  f.note = el("input"); f.note.type = "text"; f.note.maxLength = 300; f.note.placeholder = "Fournisseur, devis, remarque…";
+  f.est = el("span", "tag-est", "Estimation");
+  f.tk = el("span", "tag-tk", "Dossards");
+  f.del = el("button", "del", "Supprimer"); f.del.type = "button";
+  const realWrap = el("div"); realWrap.append(f.real, f.realOut);
+  const l1 = el("div", "bl-l1");
+  l1.append(fld("Libellé", f.label), fld("Pôle", f.pole), fld("Qté", f.qty), fld("Prix unit. (€)", f.unit), fld("Prévu", f.planned), fld("Réel (€)", realWrap), fld("Statut", f.status));
+  const taskWrap = el("div"); taskWrap.style.display = "grid"; taskWrap.append(f.task, f.hint);
+  const tags = el("div", "bl-tags"); tags.append(f.tk, f.est, f.del);
+  const l2 = el("div", "bl-l2"); l2.append(fld("Tâche liée", taskWrap), fld("Note", f.note), tags);
+  f.docs = el("div", "bl-docs");
+  f.file = el("input"); f.file.type = "file"; f.file.multiple = true; f.file.hidden = true; f.file.accept = ".pdf,application/pdf,image/png,image/jpeg,image/webp";
+  f.file.addEventListener("change", () => { const files = [...f.file.files]; const cat = f.file.dataset.cat || "devis"; f.file.value = ""; if (files.length) uploadFiles(files, { cat, line: id, task: (state.budget[id] && state.budget[id].task) || null }); });
+  r.append(l1, l2, f.docs, f.file); r._f = f;
+  const on = (input, mk) => input.addEventListener("change", () => { if (!state.canWrite) return; updateLine(id, mk(input.value)); });
+  on(f.label, v => ({ label: v.trim() }));
+  on(f.pole, v => ({ pole: POLES[v] ? v : "org" }));
+  on(f.qty, v => ({ qty: num(v), estimate: false }));
+  on(f.unit, v => ({ unit: num(v), estimate: false }));
+  on(f.real, v => ({ real: num(v), estimate: false }));
+  on(f.status, v => ({ status: v }));
+  on(f.task, v => ({ task: v || null }));
+  on(f.note, v => ({ note: v }));
+  f.del.addEventListener("click", () => confirmDelete(f.del, () => removeLine(id)));
+  return r;
+}
+function setVal(input, v) { const s = v == null ? "" : String(v); if (document.activeElement !== input && input.value !== s) input.value = s; }
+function patchRow(r, l) {
+  const f = r._f;
+  setVal(f.label, l.label || ""); setVal(f.pole, l.pole); setVal(f.qty, l.qty); setVal(f.unit, l.unit); setVal(f.status, l.status); setVal(f.note, l.note || ""); setVal(f.task, l.task || "");
+  f.planned.textContent = euro(planned(l));
+  const tkComputed = l.ticket && num(l.sold) != null;
+  f.real.hidden = tkComputed; f.realOut.hidden = !tkComputed;
+  if (tkComputed) f.realOut.textContent = euro(realOf(l)); else setVal(f.real, l.real);
+  f.est.hidden = !l.estimate; f.tk.hidden = !l.ticket;
+  const t = l.task ? taskById(l.task) : null;
+  if (t) { const done = isDone(t.id), late = isLate(t); f.hint.className = "hint" + (done ? " done" : late ? " late" : ""); f.hint.textContent = done ? "✓ Tâche faite" : (late ? "En retard · " : "Échéance ") + fmtDayShort(dueOf(t)) + " · " + OWNERS[ownerOf(t)].name; }
+  else { f.hint.className = "hint"; f.hint.textContent = l.task ? "Tâche supprimée" : ""; }
+  [f.label, f.pole, f.qty, f.unit, f.real, f.status, f.task, f.note].forEach(i => { i.disabled = !state.canWrite; });
+  f.del.hidden = !state.canWrite;
+  f.docs.textContent = "";
+  docsWhere(d => d.line === r.dataset.id).sort((a, b) => String(a[1].at).localeCompare(String(b[1].at))).forEach(([, d]) => f.docs.appendChild(docChip(d)));
+  if (canUpload()) {
+    const mk = (cat, label) => { const b = el("button", "att-btn", label); b.type = "button"; b.addEventListener("click", () => { f.file.dataset.cat = cat; f.file.click(); }); f.docs.appendChild(b); };
+    if (l.type === "dep") { mk("devis", "+ Joindre un devis"); mk("facture", "+ Joindre une facture"); } else mk("contrat", "+ Joindre un document");
+  }
+  f.docs.hidden = !f.docs.children.length;
+}
+function renderBudget(tasks, bs) {
+  // KPIs
+  const k = $("#kpis"); k.textContent = "";
+  const tile = (label, value, sub, cls) => { const d = el("div", "kpi" + (cls ? " " + cls : "")); d.append(el("span", "k", label), el("span", "v", value), el("span", "s", sub)); k.appendChild(d); };
+  tile("Dépenses prévues", euro(bs.depP), "Engagé " + euro(bs.depEng) + " · payé " + euro(bs.depPaid));
+  tile("Recettes prévues", euro(bs.recP), "Confirmé " + euro(bs.recConf) + " · encaissé " + euro(bs.recCash));
+  tile("Solde prévisionnel", signed(bs.solde), "Avec les montants réels saisis : " + signed(bs.proj), bs.solde < 0 ? "neg" : "pos");
+  const tk = bs.ticket;
+  if (bs.pm != null) tile("Point mort", bs.pm + " dossards", "à " + euro(num(tk.unit)) + ", pour " + (num(tk.qty) || 0) + " prévus", bs.pm > (num(tk.qty) || 0) ? "neg" : "pos");
+  else tile("Point mort", "—", tk ? "Renseigne le prix moyen du dossard" : "Ajoute une ligne Inscriptions pour le calculer");
+  const msg = $("#bud-msg");
+  if (!lineList().length) { msg.hidden = false; msg.className = "bud-msg ok"; msg.textContent = "Aucune ligne de budget pour l'instant. Ajoute une dépense ou une recette en bas de page."; }
+  else if (bs.solde < 0) { msg.hidden = false; msg.className = "bud-msg"; msg.textContent = "Il manque " + euro(-bs.solde) + " pour équilibrer : plus de partenaires ou de subventions, un dossard plus cher, ou des lignes en moins. Trésorerie actuelle (encaissé moins payé) : " + signed(bs.cash) + "."; }
+  else { msg.hidden = false; msg.className = "bud-msg ok"; msg.textContent = "Le prévisionnel est à l'équilibre. Trésorerie actuelle (encaissé moins payé) : " + signed(bs.cash) + "."; }
+
+  // tickets
+  $("#tk").hidden = !tk; $("#tk-missing").hidden = !!tk || !state.canWrite;
+  if (tk) {
+    setVal($("#tk-price"), tk.unit); setVal($("#tk-qty"), tk.qty); setVal($("#tk-sold"), tk.sold);
+    ["#tk-price", "#tk-qty", "#tk-sold"].forEach(s => { $(s).disabled = !state.canWrite; });
+    const q = num(tk.qty) || 0, sold = num(tk.sold) || 0, price = num(tk.unit) || 0;
+    const out = $("#tk-out"); out.textContent = "";
+    const line = (a, b) => { const p = el("span"); p.append(a + " ", el("b", null, b)); out.appendChild(p); };
+    line("Recette prévue", euro(q * price));
+    line("Recette à ce jour", euro(sold * price) + " (" + sold + " / " + q + ")");
+    const fb = el("div", "fillbar"); const fs = el("span"); fs.style.width = (q ? Math.min(100, sold / q * 100) : 0) + "%"; fb.appendChild(fs); out.appendChild(fb);
+  }
+
+  // bars
+  const bars = $("#bars"); bars.textContent = "";
+  const max = Math.max(1, ...Object.values(bs.perPole).map(v => Math.max(v.p, v.e)));
+  Object.entries(POLES).forEach(([k2, p]) => {
+    const v = bs.perPole[k2]; if (!v.p && !v.e) return;
+    const row = el("div", "bar-row"); const tr = el("div", "bar-track");
+    const bp = el("span", "bar-plan"); bp.style.width = (v.p / max * 100) + "%"; const be = el("span", "bar-eng"); be.style.width = (v.e / max * 100) + "%"; tr.append(bp, be);
+    const val = el("span", "bar-val", euro(v.p)); val.appendChild(el("small", null, euro(v.e) + " engagés"));
+    row.append(el("span", null, p.name), tr, val); bars.appendChild(row);
+  });
+  if (!bars.children.length) bars.appendChild(el("p", "bl-empty", "Pas encore de dépense saisie."));
+
+  // lines
+  taskOptions(tasks);
+  const L = lineList(); const alive = new Set(L.map(l => l.id));
+  rowMap.forEach((r, id) => { if (!alive.has(id)) { r.remove(); rowMap.delete(id); } });
+  ["dep", "rec"].forEach(type => {
+    const host = $("#" + type + "-groups");
+    const lines = L.filter(l => l.type === type);
+    let gi = 0;
+    Object.entries(POLES).forEach(([pk, p]) => {
+      const key = type + "-" + pk;
+      const gl = lines.filter(l => (POLES[l.pole] ? l.pole : "org") === pk).sort((a, b) => (a.order || 0) - (b.order || 0));
+      let g = groupMap.get(key);
+      if (!gl.length) { if (g) g.hidden = true; return; }
+      if (!g) { g = el("div", "bl-group"); const h = el("div", "bl-ghead"); h.append(el("b", null, p.name), el("span")); const rows = el("div"); g.append(h, rows); g._rows = rows; g._sum = h.lastChild; groupMap.set(key, g); }
+      g.hidden = false;
+      if (host.children[gi] !== g) host.insertBefore(g, host.children[gi] || null);
+      gi++;
+      const sp = gl.reduce((s, l) => s + planned(l), 0), sr = gl.reduce((s, l) => s + (realOf(l) || 0), 0);
+      g._sum.textContent = "Prévu " + euro(sp) + (sr ? " · réel " + euro(sr) : "");
+      gl.forEach((l, i) => {
+        let r = rowMap.get(l.id);
+        if (!r) { r = makeRow(l.id, l, tasks); rowMap.set(l.id, r); }
+        if (g._rows.children[i] !== r) g._rows.insertBefore(r, g._rows.children[i] || null);
+        patchRow(r, l);
+      });
+    });
+    const tp = lines.reduce((s, l) => s + planned(l), 0), tr = lines.reduce((s, l) => s + (realOf(l) || 0), 0);
+    const tot = $("#" + type + "-total"); tot.textContent = "";
+    tot.append(el("span", null, "Total " + (type === "dep" ? "dépenses" : "recettes")), el("span", null, "Prévu " + euro(tp) + " · réel " + euro(tr)));
+    tot.hidden = !lines.length;
+    if (!lines.length && !host.querySelector(".bl-empty")) host.appendChild(el("p", "bl-empty", type === "dep" ? "Aucune dépense pour l'instant." : "Aucune recette pour l'instant."));
+    if (lines.length) host.querySelectorAll(".bl-empty").forEach(e => e.remove());
+    document.querySelector('[data-add="' + type + '"]').hidden = !state.canWrite;
+  });
+}
+
+/* ── documents rendering (rows patched in place) ── */
+const docRowMap = new Map();
+let lineOptSig = "", lineOptHTML = "";
+function lineOptions() {
+  const L = lineList().sort((a, b) => (a.type === b.type ? 0 : a.type === "dep" ? -1 : 1) || (a.order || 0) - (b.order || 0));
+  const sig = L.map(l => l.id + ":" + (l.label || "")).join("|");
+  if (sig !== lineOptSig) {
+    lineOptSig = sig;
+    const grp = (type, label) => { const ls = L.filter(l => l.type === type); return ls.length ? '<optgroup label="' + label + '">' + ls.map(l => '<option value="' + esc(l.id) + '">' + esc((l.label || "Sans libellé").slice(0, 60)) + '</option>').join("") + '</optgroup>' : ""; };
+    lineOptHTML = '<option value="">Aucune</option>' + grp("dep", "Dépenses") + grp("rec", "Recettes");
+    const sels = [$("#up-line")].concat([...docRowMap.values()].map(r => r._f.line));
+    sels.forEach(s => { if (document.activeElement !== s) { const v = s.value; s.innerHTML = lineOptHTML; s.value = v; } });
+  }
+  return lineOptHTML;
+}
+function refreshDocTaskSelects(html) {
+  [$("#up-task")].concat([...docRowMap.values()].map(r => r._f.task)).forEach(s => {
+    if (s._sig !== taskOptSig && document.activeElement !== s) { const v = s.value; s.innerHTML = html.replace("Aucune tâche liée", "Aucune"); s.value = v; s._sig = taskOptSig; }
+  });
+}
+function makeDocRow(id) {
+  const li = el("li", "doc"); li.dataset.id = id;
+  const f = {};
+  f.ico = el("div", "doc-ico");
+  f.name = el("input", "doc-name"); f.name.type = "text"; f.name.maxLength = 200; f.name.setAttribute("aria-label", "Nom du document");
+  f.cat = el("select", "mini"); f.cat.setAttribute("aria-label", "Type de document");
+  Object.entries(DOC_CATS).forEach(([k, c]) => { const o = el("option", null, c.name); o.value = k; f.cat.appendChild(o); });
+  f.task = el("select", "mini"); f.task.setAttribute("aria-label", "Tâche liée");
+  f.line = el("select", "mini"); f.line.setAttribute("aria-label", "Ligne de budget liée"); f.line.innerHTML = lineOptHTML;
+  f.info = el("span");
+  const meta = el("div", "doc-meta"); meta.append(f.cat, f.task, f.line, f.info);
+  const main = el("div", "doc-main"); main.append(f.name, meta);
+  f.open = el("a", "open-link", "Ouvrir"); f.open.href = "#";
+  f.del = el("button", "del", "Supprimer"); f.del.type = "button";
+  const act = el("div", "doc-act"); act.append(f.open, f.del);
+  li.append(f.ico, main, act); li._f = f;
+  const on = (input, mk) => input.addEventListener("change", () => { if (!state.canWrite) return; updateDoc(id, mk(input.value)); });
+  on(f.name, v => ({ name: v.trim() || "Sans titre" }));
+  on(f.cat, v => ({ cat: DOC_CATS[v] ? v : "autre" }));
+  on(f.task, v => ({ task: v || null }));
+  on(f.line, v => ({ line: v || null }));
+  f.del.addEventListener("click", () => confirmDelete(f.del, () => removeDoc(id)));
+  return li;
+}
+function patchDocRow(r, d) {
+  const f = r._f;
+  setVal(f.name, d.name || ""); setVal(f.cat, d.cat); setVal(f.task, d.task || ""); setVal(f.line, d.line || "");
+  if (f.ico._asset !== d.asset) {
+    f.ico._asset = d.asset; f.ico.textContent = "";
+    const isImg = /^image\//.test(d.type || "");
+    f.ico.className = "doc-ico" + (isImg ? "" : " pdf");
+    f.ico.textContent = isImg ? "IMG" : "PDF";
+  }
+  if (/^image\//.test(d.type || "") && blob(d) && !f.ico.querySelector("img")) { const img = el("img"); img.alt = ""; img.loading = "lazy"; img.src = blob(d); img.addEventListener("error", () => { f.ico.textContent = "IMG"; }); f.ico.textContent = ""; f.ico.appendChild(img); }
+  const who = whoName(d.who, d.by);
+  f.info.textContent = [who ? "Ajouté par " + who : "", d.at ? fmtShort(d.at) : "", fmtSize(d.size)].filter(Boolean).join(" · ");
+  f.open.dataset.asset = d.asset; f.open.title = "Ouvrir " + (d.file || d.name);
+  [f.name, f.cat, f.task, f.line].forEach(i => { i.disabled = !state.canWrite; });
+  f.del.hidden = !canUpload();
+}
+function renderDocs(tasks) {
+  const locked = $("#up-locked"), drop = $("#doc-drop");
+  const can = canUpload();
+  drop.hidden = !can; locked.hidden = can;
+  if (!can) locked.textContent = state.mode !== "db" ? "Connecte-toi pour ajouter des fichiers." : "Ton adresse n'est pas dans la liste de l'équipe : demande à Paul de l'ajouter.";
+  ensureThumbs();
+  const tHTML = taskOptions(tasks); lineOptions(); refreshDocTaskSelects(tHTML);
+  if (state.docPreset) { $("#up-task").value = state.docPreset.task || ""; $("#up-line").value = state.docPreset.line || ""; state.docPreset = null; }
+  renderUsage();
+
+  const all = Object.entries(state.docs).filter(([, d]) => d && d.asset).map(([id, d]) => ({ id, ...d })).sort((a, b) => String(b.at || "").localeCompare(String(a.at || "")));
+  $("#doc-cats").querySelectorAll("[data-doccat]").forEach(b => {
+    const k = b.dataset.doccat; b.setAttribute("aria-pressed", String(state.docCat === k));
+    b.querySelector(".n").textContent = k === "all" ? all.length : all.filter(d => d.cat === k).length;
+  });
+  const q = norm(state.docQ.trim());
+  const match = d => (state.docCat === "all" || d.cat === state.docCat) && (!state.docTask || d.task === state.docTask) && (!state.docLine || d.line === state.docLine) && (!q || norm((d.name || "") + " " + (d.file || "")).includes(q));
+  const note = $("#doc-filter-note"), clr = $("#doc-clear");
+  const tk = state.docTask ? taskById(state.docTask) : null;
+  note.textContent = tk ? "Documents de la tâche : " + tk.label : state.docLine && state.budget[state.docLine] ? "Documents de la ligne : " + (state.budget[state.docLine].label || "") : "";
+  clr.hidden = !note.textContent;
+
+  const host = $("#doc-list"); const alive = new Set(all.map(d => d.id));
+  docRowMap.forEach((r, id) => { if (!alive.has(id)) { r.remove(); docRowMap.delete(id); } });
+  let shown = 0;
+  all.forEach((d, i) => {
+    let r = docRowMap.get(d.id);
+    if (!r) { r = makeDocRow(d.id); r._f.task.innerHTML = tHTML.replace("Aucune tâche liée", "Aucune"); r._f.task._sig = taskOptSig; docRowMap.set(d.id, r); }
+    if (host.children[i] !== r) host.insertBefore(r, host.children[i] || null);
+    patchDocRow(r, d);
+    const m = match(d); r.hidden = !m; if (m) shown++;
+  });
+  const empty = $("#doc-empty");
+  empty.hidden = shown > 0;
+  if (!shown) empty.textContent = !all.length ? "Aucun document pour l'instant. Commence par les devis reçus, la convention avec la maison de champagne ou l'attestation d'assurance." : state.docCat !== "all" && DOC_CATS[state.docCat] && !state.docTask && !q ? "Rien dans « " + DOC_CATS[state.docCat].name + " » pour l'instant. " + DOC_CATS[state.docCat].hint : "Aucun document avec ces filtres.";
+}
+
+/* ── main render ── */
+function render() {
+  const tasks = computeTasks();
+  const today = todayStr();
+  const bs = budgetSummary();
+  const total = tasks.length, done = tasks.filter(t => isDone(t.id)).length;
+  const pctDone = total ? Math.round(done / total * 100) : 0;
+  const loops = total ? Math.floor(done / total * 24) : 0;
+  $("#loops-title").textContent = loops + (loops > 1 ? " boucles bouclées" : " boucle bouclée") + " sur 24";
+  $("#loops-count").textContent = done + " / " + total + " tâches · " + pctDone + " %";
+  [...$("#strip").children].forEach((c, i) => c.classList.toggle("on", i < loops));
+
+  const critLeft = tasks.filter(t => t.crit && !isDone(t.id)).length;
+  const late = tasks.filter(isLate).length;
+  const al = $("#alerts"); al.textContent = "";
+  al.appendChild(el("span", "pill" + (critLeft ? " alert" : " ok"), critLeft ? critLeft + " tâches critiques à faire" : "Toutes les tâches critiques sont faites"));
+  al.appendChild(el("span", "pill" + (late ? " alert" : ""), late ? late + " en retard sur le planning" : "Rien en retard"));
+  const next = tasks.filter(t => !isDone(t.id) && dueOf(t) >= today).sort(byDue)[0];
+  if (next) { const p = el("span", "pill"); p.append("Prochaine échéance " + fmtDayShort(dueOf(next)) + " · ", el("span", "t", next.label)); al.appendChild(p); }
+  if (lineList().length) al.appendChild(el("span", "pill" + (bs.solde < 0 ? " alert" : ""), "Solde prévisionnel " + signed(bs.solde)));
+
+  $("#org-grid").querySelectorAll("[data-owner]").forEach(b => {
+    const k = b.dataset.owner; const ot = tasks.filter(t => ownerOf(t) === k);
+    const od = ot.filter(t => isDone(t.id)).length, oc = ot.filter(t => t.crit && !isDone(t.id)).length, ol = ot.filter(isLate).length;
+    const on = state.owners.has(k);
+    b.setAttribute("aria-pressed", String(on));
+    b.querySelector('[data-role="flt"]').textContent = on ? "Filtre actif" : "Filtrer";
+    b.querySelector('[data-role="fill"]').style.width = (ot.length ? od / ot.length * 100 : 0) + "%";
+    const s = b.querySelector('[data-role="stats"]'); s.textContent = "";
+    s.append(el("span", null, od + "/" + ot.length + " faites"), el("span", oc ? "a" : null, oc + " critique" + (oc > 1 ? "s" : "")));
+    if (ol) s.append(el("span", "a", ol + " en retard"));
+    const nx = ot.filter(t => !isDone(t.id) && dueOf(t) >= today).sort(byDue)[0];
+    const n = b.querySelector('[data-role="next"]'); n.textContent = "";
+    if (nx) { n.append("Prochaine : ", el("b", null, fmtDayShort(dueOf(nx))), " · " + nx.label); n.title = nx.label; }
+  });
+
+  document.querySelectorAll(".tab").forEach(t => { const on = t.dataset.view === state.view; t.setAttribute("aria-selected", String(on)); t.tabIndex = on ? 0 : -1; });
+  $("#view-list").hidden = state.view !== "list";
+  $("#view-retro").hidden = state.view !== "retro";
+  $("#view-budget").hidden = state.view !== "budget";
+  $("#view-docs").hidden = state.view !== "docs";
+
+  if (state.view === "list") renderList(tasks, today, bs);
+  if (state.view === "retro") renderPlanning(tasks, today, bs);
+  if (state.view === "budget") renderBudget(tasks, bs);
+  if (state.view === "docs") renderDocs(tasks);
+
+  const days = Math.ceil((RACE - new Date()) / 86400000);
+  $("#countdown").textContent = days > 0 ? "J-" + days + " avant le départ" : (days > -2 ? "C'est le jour J" : "Édition 2027 terminée");
+}
+
+/* ── live connection (Supabase) ── */
+let renderQueued = false;
+function queueRender() { if (renderQueued) return; renderQueued = true; requestAnimationFrame(() => { renderQueued = false; render(); }); }
+async function loadAll() {
+  const maps = {}; Object.values(COLL).forEach(k => { maps[k] = {}; });
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await sb.from("items").select("collection,id,data").range(from, from + 999);
+    if (error) throw error;
+    (data || []).forEach(r => { const k = COLL[r.collection]; if (k) maps[k][r.id] = r.data; });
+    if (!data || data.length < 1000) break;
+  }
+  Object.assign(state, maps);
+}
+function subscribe() {
+  if (channel) sb.removeChannel(channel);
+  let dropped = false;
+  channel = sb.channel("items-live")
+    .on("postgres_changes", { event: "*", schema: "public", table: "items" }, p => {
+      const row = p.eventType === "DELETE" ? p.old : p.new;
+      const k = row && COLL[row.collection]; if (!k) return;
+      if (p.eventType === "DELETE") delete state[k][row.id]; else state[k][row.id] = row.data;
+      queueRender();
+    })
+    .subscribe(async status => {
+      if (status === "SUBSCRIBED") {
+        setSync("live", "En direct : chaque modification de l'équipe apparaît ici instantanément.");
+        if (dropped) { dropped = false; try { await loadAll(); queueRender(); } catch (e) {} }
+      } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        dropped = true; setSync("warn", "Connexion en direct interrompue, reconnexion en cours…");
+      }
+    });
+}
+function setLoginMsg(msg, kind) { const m = $("#login-msg"); m.textContent = msg; m.className = "login-msg" + (kind ? " " + kind : ""); }
+function showLogin() { $("#app").hidden = true; $("#login").hidden = false; }
+async function start(s) {
+  if (startedFor === s.user.id) return;
+  startedFor = s.user.id; session = s;
+  state.uid = s.user.id; state.email = s.user.email || "";
+  $("#login").hidden = true; $("#app").hidden = false;
+  $("#account-email").textContent = "Connecté : " + state.email;
+  let team = false;
+  try { const { data, error } = await sb.rpc("is_team"); team = !error && data === true; } catch (e) {}
+  state.canWrite = team; state.mode = "db";
+  if (!team) { render(); setReadOnlySync(); return; }
+  try { await loadAll(); } catch (e) { setSync("warn", "Impossible de charger les données. Vérifie ta connexion puis recharge la page."); }
+  render(); writePeople(); subscribe();
+  document.addEventListener("visibilitychange", async () => { if (!document.hidden && state.mode === "db") { try { await loadAll(); queueRender(); } catch (e) {} } });
+}
+async function boot() {
+  const cfg = window.SACREES_CONFIG || {};
+  $("#login-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const email = $("#login-email").value.trim(); if (!email || !sb) return;
+    const btn = $("#login-btn"); btn.disabled = true; setLoginMsg("Envoi du lien…");
+    const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: location.origin + location.pathname } });
+    btn.disabled = false;
+    if (!error) setLoginMsg("C'est parti : ouvre le lien envoyé à " + email + ". Pense à regarder les indésirables.", "ok");
+    else if (/signup|not allowed|not found|invalid/i.test(error.message || "")) setLoginMsg("Cette adresse n'est pas invitée : demande à Paul de t'ajouter.", "err");
+    else if (/rate|seconds|too many/i.test(error.message || "")) setLoginMsg("Trop de demandes d'un coup : attends une minute avant de réessayer.", "err");
+    else setLoginMsg("L'envoi n'a pas marché : " + (error.message || "erreur inconnue"), "err");
+  });
+  $("#logout").addEventListener("click", async () => { try { await sb.auth.signOut(); } catch (e) {} location.reload(); });
+  if (!cfg.url || !cfg.anonKey || !window.supabase) {
+    showLogin(); $("#login-form").hidden = true;
+    setLoginMsg("Configuration manquante : renseigne SUPABASE_URL et SUPABASE_ANON_KEY dans Vercel, puis redéploie.", "err");
+    return;
+  }
+  sb = window.supabase.createClient(cfg.url, cfg.anonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+  sb.auth.onAuthStateChange((ev, s) => { if (s) start(s); });
+  const { data } = await sb.auth.getSession();
+  if (data && data.session) start(data.session); else showLogin();
+}
+
+loadUI();
+buildSkeleton();
+render();
+boot();
+</script>
+</body>
+</html>

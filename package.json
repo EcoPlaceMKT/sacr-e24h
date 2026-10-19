@@ -1,0 +1,13 @@
+{
+  "name": "sacrees-24h",
+  "private": true,
+  "description": "Espace organisateurs des Sacrées 24H : tâches, planning, budget et documents partagés en temps réel.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/build.mjs && npx --yes serve@14.2.3 dist"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
