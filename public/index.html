@@ -414,6 +414,34 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .login-msg.ok { color: var(--lime-text); font-weight: 600; }
 .account { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 12.5px; color: var(--ink-2); }
 
+/* ── Bloc-notes chiffré ─────────────── */
+.nb-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px 16px; flex-wrap: wrap; }
+.nb-panel { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+.nb-panel .lbl { display: grid; gap: 4px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); flex: 1 1 220px; min-width: 0; }
+.nb-panel .field { width: 100%; font-weight: 400; color: var(--ink); }
+.nb-panel textarea.field { resize: vertical; font: inherit; }
+.nb-lead { margin: 0; font-weight: 600; }
+.nb-msg { font-size: 13px; color: var(--ink-2); }
+.nb-msg.err { color: var(--alert); }
+.nb-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.nb-wide { grid-column: 1 / -1; }
+.nb-pass { display: flex; gap: 6px; min-width: 0; }
+.nb-pass .field { flex: 1 1 auto; min-width: 0; font-family: var(--mono); }
+.nb-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.nb-card { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 8px; background: var(--surface); align-content: start; min-width: 0; }
+.nb-card h3 { margin: 0; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.nb-row { display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; gap: 6px; align-items: center; font-size: 13px; }
+.nb-row .k { color: var(--ink-3); font-size: 12px; }
+.nb-row .v { font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere; }
+.nb-row a.v { color: var(--ink); }
+.nb-acts { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.nb-mini { border: 1px solid var(--line); background: transparent; border-radius: 6px; font-size: 11.5px; padding: 1px 7px; cursor: pointer; color: var(--ink-2); }
+.nb-mini:hover { border-color: var(--ink); color: var(--ink); }
+.nb-note { margin: 0; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink-2); }
+.nb-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11.5px; color: var(--ink-3); border-top: 1px solid var(--line); padding-top: 8px; }
+.nb-card.pending { color: var(--ink-3); font-size: 13px; }
+@media (max-width: 640px) { .nb-grid { grid-template-columns: minmax(0, 1fr); } }
+
 footer { font-size: 12.5px; color: var(--ink-3); display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 16px; }
 footer p { margin: 0; max-width: 78ch; }
 
@@ -666,6 +694,48 @@ footer p { margin: 0; max-width: 78ch; }
       </div>
       <p class="bud-msg ok" id="up-locked" hidden></p>
       <p class="sub" id="doc-usage" hidden></p>
+    </section>
+    <section class="block" aria-labelledby="nb-title" id="notebook">
+      <div class="nb-head">
+        <div>
+          <p class="eyebrow">Identifiants, codes d'accès, infos utiles</p>
+          <h2 class="h-sec" id="nb-title">Bloc-notes</h2>
+        </div>
+        <div class="row" id="nb-tools" hidden>
+          <button class="btn" type="button" id="nb-add">+ Ajouter une fiche</button>
+          <button class="linkbtn" type="button" id="nb-lock">Verrouiller</button>
+        </div>
+      </div>
+      <p class="sub">Le contenu est chiffré avec un code d'équipe : sans ce code, personne ne peut le lire, même avec le lien du site.</p>
+      <form class="nb-panel" id="nb-setup" hidden>
+        <p class="nb-lead">Choisis le code d'équipe du bloc-notes</p>
+        <div class="row">
+          <label class="lbl" for="nb-new">Code (8 caractères minimum)<input class="field" type="password" id="nb-new" autocomplete="new-password"></label>
+          <label class="lbl" for="nb-new2">Confirmation<input class="field" type="password" id="nb-new2" autocomplete="new-password"></label>
+        </div>
+        <p class="sub">Transmets-le à l'équipe de vive voix ou en message privé. S'il est oublié, le contenu du bloc-notes ne pourra pas être récupéré.</p>
+        <div class="row"><button class="btn" type="submit">Créer le bloc-notes</button><span class="nb-msg" id="nb-setup-msg" role="status"></span></div>
+      </form>
+      <form class="nb-panel" id="nb-unlock" hidden>
+        <div class="row">
+          <label class="lbl" for="nb-code">Code d'équipe<input class="field" type="password" id="nb-code" autocomplete="current-password"></label>
+          <label class="toggle"><input type="checkbox" id="nb-remember"> Rester déverrouillé sur cet appareil</label>
+        </div>
+        <div class="row"><button class="btn" type="submit">Déverrouiller</button><span class="nb-msg" id="nb-unlock-msg" role="status"></span></div>
+      </form>
+      <form class="nb-panel" id="nb-form" hidden>
+        <p class="nb-lead" id="nb-form-title">Nouvelle fiche</p>
+        <div class="nb-grid">
+          <label class="lbl" for="nb-f-title">Titre<input class="field" type="text" id="nb-f-title" maxlength="120" placeholder="Ex. Compte Instagram"></label>
+          <label class="lbl" for="nb-f-login">Identifiant<input class="field" type="text" id="nb-f-login" maxlength="200" autocomplete="off" spellcheck="false"></label>
+          <label class="lbl" for="nb-f-pass">Mot de passe<span class="nb-pass"><input class="field" type="text" id="nb-f-pass" maxlength="200" autocomplete="off" spellcheck="false"><button class="btn ghost" type="button" id="nb-gen">Générer</button></span></label>
+          <label class="lbl" for="nb-f-url">Lien<input class="field" type="text" id="nb-f-url" maxlength="300" placeholder="https://" spellcheck="false"></label>
+          <label class="lbl nb-wide" for="nb-f-note">Note<textarea class="field" id="nb-f-note" rows="3" maxlength="3000"></textarea></label>
+        </div>
+        <div class="row"><button class="btn" type="submit">Enregistrer</button><button class="btn ghost" type="button" id="nb-cancel">Annuler</button><span class="nb-msg" id="nb-form-msg" role="status"></span></div>
+      </form>
+      <ul class="nb-list" id="nb-list" hidden></ul>
+      <p class="bl-empty" id="nb-empty" hidden></p>
     </section>
     <section class="block" aria-labelledby="doc-list-title">
       <h2 class="h-sec" id="doc-list-title">Classeur</h2>
@@ -936,13 +1006,13 @@ const EUR = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR",
 const state = {
   phase: "all", poles: new Set(), owners: new Set(), critOnly: false, hideDone: false, q: "", view: "list", me: "",
   agMode: "month", agMonth: "", agDay: "",
-  checks: {}, extras: {}, assign: {}, due: {}, labels: {}, comments: {}, budget: {}, docs: {}, people: {}, names: {}, email: "",
+  checks: {}, extras: {}, assign: {}, due: {}, labels: {}, comments: {}, budget: {}, docs: {}, people: {}, notes: {}, names: {}, email: "",
   drafts: {}, renaming: null,
   docCat: "all", docQ: "", docTask: null, docLine: null, docPreset: null, docUsage: null,
   mode: "pending", canWrite: true, uid: null, tasks: [], plEdit: new Set(), plPast: false,
 };
 let sb = null, session = null, channel = null, startedFor = null;
-const COLL = { checks: "checks", extra: "extras", assign: "assign", due: "due", label: "labels", comments: "comments", budget: "budget", docs: "docs", people: "people" };
+const COLL = { checks: "checks", extra: "extras", assign: "assign", due: "due", label: "labels", comments: "comments", budget: "budget", docs: "docs", people: "people", notes: "notes" };
 
 /* ── helpers ── */
 const $ = (s, r = document) => r.querySelector(s);
@@ -1297,6 +1367,7 @@ function buildSkeleton() {
   buildPlanning();
   buildBudget();
   buildDocs();
+  buildNotebook();
 
   // shared delegation for task rows wherever they appear
   document.addEventListener("change", e => {
@@ -1858,6 +1929,178 @@ function renderBudget(tasks, bs) {
   });
 }
 
+/* ── bloc-notes chiffré (AES-GCM, clé dérivée du code d'équipe par PBKDF2) ── */
+const NB_LS = "sacrees24h-vault";
+const nb = { key: null, cache: new Map(), editing: null, show: new Set(), triedSalt: null };
+const te = new TextEncoder(), td = new TextDecoder();
+const toB64 = buf => { const a = new Uint8Array(buf); let s = ""; for (let i = 0; i < a.length; i++) s += String.fromCharCode(a[i]); return btoa(s); };
+const fromB64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function nbDerive(code, salt, iter) {
+  const base = await crypto.subtle.importKey("raw", te.encode(code), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({ name: "PBKDF2", salt: fromB64(salt), iterations: iter, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
+}
+async function nbEncrypt(obj, key = nb.key) { const iv = crypto.getRandomValues(new Uint8Array(12)); const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, te.encode(JSON.stringify(obj))); return { iv: toB64(iv), ct: toB64(ct) }; }
+async function nbDecrypt(iv, ct, key = nb.key) { const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: fromB64(iv) }, key, fromB64(ct)); return JSON.parse(td.decode(pt)); }
+const vaultDoc = () => (state.notes._vault && state.notes._vault.salt) ? state.notes._vault : null;
+const noteIds = () => Object.keys(state.notes).filter(id => id !== "_vault" && state.notes[id] && state.notes[id].ct);
+async function nbCreate(code) {
+  if (vaultDoc()) return "Un code existe déjà : déverrouille avec le code de l'équipe.";
+  const salt = toB64(crypto.getRandomValues(new Uint8Array(16))), iter = 310000;
+  const key = await nbDerive(code, salt, iter);
+  const v = await nbEncrypt({ check: "sacrees24h" }, key);
+  nb.key = key;
+  const b = { salt, iter, ...v, ...stamp() };
+  state.notes._vault = b; write("notes/_vault", b);
+  return "";
+}
+async function nbUnlock(code, remember) {
+  const v = vaultDoc(); if (!v) return "Aucun bloc-notes à déverrouiller.";
+  try {
+    const key = await nbDerive(code, v.salt, v.iter || 310000);
+    const r = await nbDecrypt(v.iv, v.ct, key);
+    if (!r || r.check !== "sacrees24h") throw new Error("bad");
+    nb.key = key;
+    if (remember) { try { localStorage.setItem(NB_LS, JSON.stringify({ salt: v.salt, k: toB64(await crypto.subtle.exportKey("raw", key)) })); } catch (e) {} }
+    return "";
+  } catch (e) { return "Code incorrect."; }
+}
+async function nbRestore() {
+  const v = vaultDoc(); if (!v || nb.key || nb.triedSalt === v.salt) return;
+  nb.triedSalt = v.salt;
+  let saved = null; try { saved = JSON.parse(localStorage.getItem(NB_LS) || "null"); } catch (e) {}
+  if (!saved || saved.salt !== v.salt) return;
+  try {
+    const key = await crypto.subtle.importKey("raw", fromB64(saved.k), { name: "AES-GCM" }, true, ["encrypt", "decrypt"]);
+    const r = await nbDecrypt(v.iv, v.ct, key);
+    if (r && r.check === "sacrees24h") { nb.key = key; render(); }
+  } catch (e) { try { localStorage.removeItem(NB_LS); } catch (er) {} }
+}
+function nbLock() { nb.key = null; nb.cache.clear(); nb.show.clear(); nb.editing = null; $("#nb-form").hidden = true; try { localStorage.removeItem(NB_LS); } catch (e) {} render(); }
+function nbSync() {
+  if (!nb.key) return;
+  const ids = new Set(noteIds());
+  [...nb.cache.keys()].forEach(id => { if (!ids.has(id)) nb.cache.delete(id); });
+  ids.forEach(id => {
+    const d = state.notes[id], c = nb.cache.get(id);
+    if (c && c.ct === d.ct) return;
+    nb.cache.set(id, { ct: d.ct, data: null, pending: true });
+    nbDecrypt(d.iv, d.ct)
+      .then(data => { const cur = nb.cache.get(id); if (cur && cur.ct === d.ct) { cur.data = data; cur.pending = false; queueRender(); } })
+      .catch(() => { const cur = nb.cache.get(id); if (cur && cur.ct === d.ct) { cur.err = true; cur.pending = false; queueRender(); } });
+  });
+}
+async function nbSave(id, data) {
+  const v = await nbEncrypt(data);
+  const nid = id || newId("n");
+  const b = { ...v, who: state.me || null, ...stamp() };
+  state.notes[nid] = b; nb.cache.set(nid, { ct: b.ct, data, pending: false }); write("notes/" + nid, b); render();
+}
+function nbDelete(id) { delete state.notes[id]; nb.cache.delete(id); nb.show.delete(id); write("notes/" + id, null); render(); }
+function nbGen() { const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!?@#%+-"; return Array.from(crypto.getRandomValues(new Uint32Array(16)), x => chars[x % chars.length]).join(""); }
+function copyText(text) {
+  try { navigator.clipboard.writeText(text).then(() => toast("Copié."), () => toast("Copie impossible ici : sélectionne le texte à la main.", true)); }
+  catch (e) { toast("Copie impossible ici : sélectionne le texte à la main.", true); }
+}
+function nbOpenForm(id) {
+  nb.editing = id || "new";
+  const c = id ? nb.cache.get(id) : null, d = (c && c.data) || {};
+  $("#nb-form-title").textContent = id ? "Modifier la fiche" : "Nouvelle fiche";
+  $("#nb-f-title").value = d.title || ""; $("#nb-f-login").value = d.login || ""; $("#nb-f-pass").value = d.password || "";
+  $("#nb-f-url").value = d.url || ""; $("#nb-f-note").value = d.note || ""; $("#nb-form-msg").textContent = "";
+  $("#nb-form").hidden = false; $("#nb-f-title").focus();
+  $("#nb-form").scrollIntoView({ block: "nearest", behavior: reduced() ? "auto" : "smooth" });
+}
+function nbCloseForm() { nb.editing = null; $("#nb-form").hidden = true; }
+function buildNotebook() {
+  const setMsg = (id, msg, err) => { const m = $(id); m.textContent = msg; m.className = "nb-msg" + (err ? " err" : ""); };
+  $("#nb-setup").addEventListener("submit", async e => {
+    e.preventDefault();
+    const a = $("#nb-new").value, b = $("#nb-new2").value;
+    if (a.length < 8) return setMsg("#nb-setup-msg", "Le code doit faire au moins 8 caractères.", true);
+    if (a !== b) return setMsg("#nb-setup-msg", "Les deux codes ne sont pas identiques.", true);
+    if (!window.crypto || !crypto.subtle) return setMsg("#nb-setup-msg", "Ce navigateur ne permet pas le chiffrement.", true);
+    setMsg("#nb-setup-msg", "Création…");
+    const err = await nbCreate(a);
+    if (err) return setMsg("#nb-setup-msg", err, true);
+    $("#nb-new").value = ""; $("#nb-new2").value = ""; setMsg("#nb-setup-msg", ""); render();
+  });
+  $("#nb-unlock").addEventListener("submit", async e => {
+    e.preventDefault();
+    const code = $("#nb-code").value; if (!code) return;
+    setMsg("#nb-unlock-msg", "Vérification…");
+    const err = await nbUnlock(code, $("#nb-remember").checked);
+    if (err) return setMsg("#nb-unlock-msg", err, true);
+    $("#nb-code").value = ""; setMsg("#nb-unlock-msg", ""); render();
+  });
+  $("#nb-add").addEventListener("click", () => nbOpenForm(null));
+  $("#nb-cancel").addEventListener("click", nbCloseForm);
+  $("#nb-lock").addEventListener("click", nbLock);
+  $("#nb-gen").addEventListener("click", () => { $("#nb-f-pass").value = nbGen(); });
+  $("#nb-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const data = { title: $("#nb-f-title").value.trim(), login: $("#nb-f-login").value.trim(), password: $("#nb-f-pass").value, url: $("#nb-f-url").value.trim(), note: $("#nb-f-note").value.trim() };
+    if (!data.title) { $("#nb-form-msg").textContent = "Donne un titre à la fiche."; $("#nb-form-msg").className = "nb-msg err"; return; }
+    if (!nb.key || !state.canWrite) return;
+    await nbSave(nb.editing === "new" ? null : nb.editing, data); nbCloseForm(); toast("Fiche enregistrée.");
+  });
+  $("#nb-list").addEventListener("click", e => {
+    const b = e.target.closest("button[data-nb]"); if (!b) return;
+    const id = b.dataset.id, c = nb.cache.get(id), d = c && c.data;
+    if (b.dataset.nb === "copy" && d) copyText(d[b.dataset.field] || "");
+    else if (b.dataset.nb === "show") { nb.show.has(id) ? nb.show.delete(id) : nb.show.add(id); render(); }
+    else if (b.dataset.nb === "edit") nbOpenForm(id);
+    else if (b.dataset.nb === "del") confirmDelete(b, () => nbDelete(id));
+  });
+}
+function nbRow(label, value, id, opts = {}) {
+  const r = el("div", "nb-row"); r.appendChild(el("span", "k", label));
+  if (opts.link) { const a = el("a", "v", value); a.href = /^https?:\/\//i.test(value) ? value : "https://" + value; a.target = "_blank"; a.rel = "noopener noreferrer"; r.appendChild(a); }
+  else r.appendChild(el("span", "v", opts.mask ? "••••••••••" : value));
+  const acts = el("span", "nb-acts");
+  if (opts.toggle) { const s = el("button", "nb-mini", opts.mask ? "Afficher" : "Masquer"); s.type = "button"; s.dataset.nb = "show"; s.dataset.id = id; acts.appendChild(s); }
+  if (opts.field) { const c = el("button", "nb-mini", "Copier"); c.type = "button"; c.dataset.nb = "copy"; c.dataset.id = id; c.dataset.field = opts.field; acts.appendChild(c); }
+  r.appendChild(acts);
+  return r;
+}
+function renderNotebook() {
+  const v = vaultDoc(), open = !!nb.key;
+  if (v && !open) nbRestore();
+  $("#nb-setup").hidden = !!v || !state.canWrite || state.mode !== "db";
+  $("#nb-unlock").hidden = !v || open;
+  $("#nb-tools").hidden = !open || !state.canWrite;
+  if (!open) { $("#nb-form").hidden = true; nb.editing = null; }
+  const list = $("#nb-list"), empty = $("#nb-empty");
+  list.hidden = !open; empty.hidden = true;
+  if (!open) { list.textContent = ""; return; }
+  nbSync();
+  const items = noteIds().map(id => ({ id, c: nb.cache.get(id), d: state.notes[id] }))
+    .sort((a, b) => ((a.c && a.c.data && a.c.data.title) || "￿").localeCompare((b.c && b.c.data && b.c.data.title) || "￿", "fr"));
+  list.textContent = "";
+  if (!items.length) { empty.hidden = false; empty.textContent = "Aucune fiche pour l'instant. Ajoute les accès utiles : réseaux sociaux, billetterie, boîte mail de l'événement…"; return; }
+  items.forEach(({ id, c, d }) => {
+    const li = el("li", "nb-card");
+    if (!c || c.pending) { li.classList.add("pending"); li.textContent = "Déchiffrement…"; list.appendChild(li); return; }
+    if (c.err || !c.data) { li.classList.add("pending"); li.textContent = "Impossible de lire cette fiche avec ce code."; list.appendChild(li); return; }
+    const x = c.data;
+    li.appendChild(el("h3", null, x.title || "Sans titre"));
+    if (x.login) li.appendChild(nbRow("Identifiant", x.login, id, { field: "login" }));
+    if (x.password) li.appendChild(nbRow("Mot de passe", x.password, id, { field: "password", toggle: true, mask: !nb.show.has(id) }));
+    if (x.url) li.appendChild(nbRow("Lien", x.url, id, { link: true }));
+    if (x.note) li.appendChild(el("p", "nb-note", x.note));
+    const f = el("div", "nb-foot");
+    const who = whoName(d.who, d.by);
+    f.appendChild(el("span", null, [who ? "Modifié par " + who : "", d.at ? fmtShort(d.at) : ""].filter(Boolean).join(" · ")));
+    if (state.canWrite) {
+      const acts = el("span", "nb-acts");
+      const ed = el("button", "nb-mini", "Modifier"); ed.type = "button"; ed.dataset.nb = "edit"; ed.dataset.id = id;
+      const del = el("button", "nb-mini", "Supprimer"); del.type = "button"; del.dataset.nb = "del"; del.dataset.id = id;
+      acts.append(ed, del); f.appendChild(acts);
+    }
+    li.appendChild(f);
+    list.appendChild(li);
+  });
+}
+
 /* ── documents rendering (rows patched in place) ── */
 const docRowMap = new Map();
 let lineOptSig = "", lineOptHTML = "";
@@ -1919,6 +2162,7 @@ function patchDocRow(r, d) {
   f.del.hidden = !canUpload();
 }
 function renderDocs(tasks) {
+  renderNotebook();
   const locked = $("#up-locked"), drop = $("#doc-drop");
   const can = canUpload();
   drop.hidden = !can; locked.hidden = can;
