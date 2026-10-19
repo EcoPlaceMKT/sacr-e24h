@@ -462,13 +462,7 @@ footer p { margin: 0; max-width: 78ch; }
       <span class="h24"><svg viewBox="0 0 30 22" aria-hidden="true"><path d="M2 20 L4 6 L10 13 L15 2 L20 13 L26 6 L28 20 Z" fill="var(--ink)"/></svg>24H</span>
     </div>
     <p class="tagline">Espace organisateurs</p>
-    <form class="login-form" id="login-form">
-      <label for="login-email">Ton adresse e-mail</label>
-      <input class="field" type="email" id="login-email" autocomplete="email" required placeholder="prenom@exemple.fr">
-      <button class="btn" type="submit" id="login-btn">Recevoir mon lien de connexion</button>
-    </form>
     <p class="login-msg" id="login-msg" role="status"></p>
-    <p class="sub">Accès réservé à l'équipe d'organisation. Pas de mot de passe : un lien de connexion arrive par e-mail.</p>
   </div>
 </div>
 
@@ -497,7 +491,6 @@ footer p { margin: 0; max-width: 78ch; }
     </div>
     <div class="alerts" id="alerts"></div>
     <div class="sync" id="sync" role="status"><span class="dot"></span><span id="sync-text">Connexion à la base partagée…</span></div>
-    <div class="account"><span id="account-email"></span><button class="linkbtn" type="button" id="logout">Se déconnecter</button></div>
   </header>
 
   <section class="orgs" aria-labelledby="orgs-title">
@@ -990,7 +983,7 @@ function whoName(who, by) {
   const p = by && state.people[by];
   if (!p) return "";
   if (by === state.uid) return "toi";
-  return PEOPLE[p.me] || (p.email ? p.email.split("@")[0] : "");
+  return PEOPLE[p.me] || "";
 }
 const byDue = (a, b) => dueOf(a).localeCompare(dueOf(b)) || (b.crit - a.crit);
 function matches(t, ignorePhase) {
@@ -1157,7 +1150,7 @@ function uploadErr(e) {
   const m = (e && (e.message || e.error)) || "", s = String(e && (e.statusCode || e.status) || "");
   if (s === "413" || /too large|maximum allowed size|exceeded/i.test(m)) return "Trop lourd : 20 Mo maximum par fichier.";
   if (/mime|type/i.test(m)) return "Format non accepté : envoie un PDF ou une image.";
-  if (s === "403" || /row-level security|unauthorized|not authorized/i.test(m)) return "Ton adresse n'a pas le droit d'ajouter des fichiers : demande à Paul de l'ajouter à l'équipe.";
+  if (s === "403" || /row-level security|unauthorized|not authorized/i.test(m)) return "La base refuse l'envoi : vérifie que le script supabase/schema.sql a bien été lancé.";
   if (/quota|storage/i.test(m)) return "L'espace de stockage est plein : supprime d'anciens fichiers.";
   return "L'envoi n'a pas abouti. Réessaie.";
 }
@@ -1228,11 +1221,11 @@ function gotoDocs(opts) {
 
 /* ── sync status ── */
 function setSync(kind, text) { const s = $("#sync"); s.className = "sync" + (kind ? " " + kind : ""); $("#sync-text").textContent = text; }
-function setReadOnlySync() { setSync("warn", "Ton adresse (" + state.email + ") n'est pas dans la liste de l'équipe : demande à Paul de l'ajouter, puis recharge la page."); }
+function setReadOnlySync() { setSync("warn", "La base refuse les modifications : vérifie que le script supabase/schema.sql a bien été lancé, puis recharge la page."); }
 
 /* ── names behind stored ids ── */
 function refreshNames() {}
-function writePeople() { if (state.mode === "db" && state.uid && state.canWrite) { const b = { email: state.email, me: state.me || null, at: new Date().toISOString() }; state.people[state.uid] = b; write("people/" + state.uid, b); } }
+function writePeople() { if (state.mode === "db" && state.uid && state.canWrite && state.me) { const b = { me: state.me, at: new Date().toISOString() }; state.people[state.uid] = b; write("people/" + state.uid, b); } }
 
 /* ── navigation ── */
 function scrollToId(id) { const t = document.getElementById(id); if (t) t.scrollIntoView({ block: "start", behavior: reduced() ? "auto" : "smooth" }); }
@@ -1873,7 +1866,7 @@ function renderDocs(tasks) {
   const locked = $("#up-locked"), drop = $("#doc-drop");
   const can = canUpload();
   drop.hidden = !can; locked.hidden = can;
-  if (!can) locked.textContent = state.mode !== "db" ? "Connecte-toi pour ajouter des fichiers." : "Ton adresse n'est pas dans la liste de l'équipe : demande à Paul de l'ajouter.";
+  if (!can) locked.textContent = state.mode !== "db" ? "Connexion à la base en cours…" : "La base refuse les ajouts : vérifie que le script supabase/schema.sql a bien été lancé.";
   ensureThumbs();
   const tHTML = taskOptions(tasks); lineOptions(); refreshDocTaskSelects(tHTML);
   if (state.docPreset) { $("#up-task").value = state.docPreset.task || ""; $("#up-line").value = state.docPreset.line || ""; state.docPreset = null; }
@@ -1991,43 +1984,30 @@ function subscribe() {
 }
 function setLoginMsg(msg, kind) { const m = $("#login-msg"); m.textContent = msg; m.className = "login-msg" + (kind ? " " + kind : ""); }
 function showLogin() { $("#app").hidden = true; $("#login").hidden = false; }
-async function start(s) {
-  if (startedFor === s.user.id) return;
-  startedFor = s.user.id; session = s;
-  state.uid = s.user.id; state.email = s.user.email || "";
+function deviceId() {
+  try {
+    let id = localStorage.getItem("sacrees24h-device");
+    if (!id) { id = "dev-" + (window.crypto && crypto.randomUUID ? crypto.randomUUID() : newId("")); localStorage.setItem("sacrees24h-device", id); }
+    return id;
+  } catch (e) { return "dev-" + newId(""); }
+}
+async function start() {
+  state.uid = deviceId();
   $("#login").hidden = true; $("#app").hidden = false;
-  $("#account-email").textContent = "Connecté : " + state.email;
-  let team = false;
-  try { const { data, error } = await sb.rpc("is_team"); team = !error && data === true; } catch (e) {}
-  state.canWrite = team; state.mode = "db";
-  if (!team) { render(); setReadOnlySync(); return; }
+  state.canWrite = true; state.mode = "db";
   try { await loadAll(); } catch (e) { setSync("warn", "Impossible de charger les données. Vérifie ta connexion puis recharge la page."); }
   render(); writePeople(); subscribe();
   document.addEventListener("visibilitychange", async () => { if (!document.hidden && state.mode === "db") { try { await loadAll(); queueRender(); } catch (e) {} } });
 }
-async function boot() {
+function boot() {
   const cfg = window.SACREES_CONFIG || {};
-  $("#login-form").addEventListener("submit", async e => {
-    e.preventDefault();
-    const email = $("#login-email").value.trim(); if (!email || !sb) return;
-    const btn = $("#login-btn"); btn.disabled = true; setLoginMsg("Envoi du lien…");
-    const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: location.origin + location.pathname } });
-    btn.disabled = false;
-    if (!error) setLoginMsg("C'est parti : ouvre le lien envoyé à " + email + ". Pense à regarder les indésirables.", "ok");
-    else if (/signup|not allowed|not found|invalid/i.test(error.message || "")) setLoginMsg("Cette adresse n'est pas invitée : demande à Paul de t'ajouter.", "err");
-    else if (/rate|seconds|too many/i.test(error.message || "")) setLoginMsg("Trop de demandes d'un coup : attends une minute avant de réessayer.", "err");
-    else setLoginMsg("L'envoi n'a pas marché : " + (error.message || "erreur inconnue"), "err");
-  });
-  $("#logout").addEventListener("click", async () => { try { await sb.auth.signOut(); } catch (e) {} location.reload(); });
   if (!cfg.url || !cfg.anonKey || !window.supabase) {
-    showLogin(); $("#login-form").hidden = true;
+    showLogin();
     setLoginMsg("Configuration manquante : renseigne SUPABASE_URL et SUPABASE_ANON_KEY dans Vercel, puis redéploie.", "err");
     return;
   }
-  sb = window.supabase.createClient(cfg.url, cfg.anonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
-  sb.auth.onAuthStateChange((ev, s) => { if (s) start(s); });
-  const { data } = await sb.auth.getSession();
-  if (data && data.session) start(data.session); else showLogin();
+  sb = window.supabase.createClient(cfg.url, cfg.anonKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+  start();
 }
 
 loadUI();
